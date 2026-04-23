@@ -565,6 +565,8 @@ async function renderReports() {
         }
     });
 
+    const periodEl = document.getElementById('report-period');
+    const reportPeriodType = periodEl ? periodEl.value : 'weekly';
     const trendLabels = getTrendLabels(reportPeriodType);
     const trendData = trendLabels.map(() => Math.floor(Math.random() * 40) + 60);
 

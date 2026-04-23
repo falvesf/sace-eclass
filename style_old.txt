@@ -1,4 +1,4 @@
-:root {
+﻿:root {
     --primary: #6366f1;
     --primary-dark: #4f46e5;
     --background: #0f172a;
@@ -32,35 +32,28 @@ body {
 .app-container {
     max-width: 1100px;
     margin: 0 auto;
-    padding: 0 1.5rem 2rem 1.5rem;
+    padding: 2rem 1.5rem;
 }
 
-/* Main Header */
+/* Sticky Header Area */
+.sticky-controls {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--background);
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    margin-top: -1rem;
+}
+
 header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.5rem 0;
-    margin-bottom: 0;
-    background: var(--background);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-}
-
-/* Sticky Wrapper for Section Controls */
-.sticky-wrapper {
-    position: sticky;
-    top: 70px; /* Alinhado logo abaixo do header */
-    z-index: 900;
-    background: var(--background);
+    margin-bottom: 2rem;
     padding: 1rem 0;
 }
 
-.section-header h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; }
-.subtitle { color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
-
-/* Navigation Links */
 .nav-links {
     display: flex;
     gap: 8px;
@@ -92,10 +85,10 @@ header {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
-    margin-top: 1rem;
+    margin-top: 1.5rem;
     background: rgba(255,255,255,0.03);
-    padding: 0.8rem;
-    border-radius: 12px;
+    padding: 1rem;
+    border-radius: 16px;
     border: 1px solid var(--border);
 }
 
@@ -117,12 +110,12 @@ header {
 .table-card { padding: 0; overflow: visible; border-radius: 16px; }
 
 /* Table Sticky Header */
-.data-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+.data-table { width: 100%; border-collapse: collapse; }
 .data-table thead th {
     position: sticky;
-    top: 185px; /* Alinhado com o sticky-wrapper */
-    background: #1e293b; /* Fundo sólido para não ver registros flutuando */
-    z-index: 800;
+    top: 120px; /* Alinhado com o sticky-controls */
+    background: #1e293b;
+    z-index: 90;
     text-align: left;
     padding: 1.2rem 1rem;
     color: var(--text-muted);
@@ -150,7 +143,7 @@ tr.row-parcial td { background-color: rgba(245, 158, 11, 0.12) !important; }
     cursor: pointer;
 }
 .status-select option[value="Sim"] { color: var(--success); background: #0f172a; }
-.status-select option[value="Não fez"] { color: var(--danger); background: #0f172a; }
+.status-select option[value="N├úo fez"] { color: var(--danger); background: #0f172a; }
 .status-select option[value="Parcialmente"] { color: var(--warning); background: #0f172a; }
 
 /* Form Elements */
@@ -169,7 +162,7 @@ input[type="week"] {
     cursor: pointer;
 }
 input[type="week"]::-webkit-calendar-picker-indicator {
-    filter: invert(1) brightness(2);
+    filter: invert(1) brightness(2); /* Muito mais brilho */
     cursor: pointer;
     transform: scale(1.2);
 }
@@ -188,18 +181,18 @@ input[type="week"]::-webkit-calendar-picker-indicator {
 .btn-primary { background: var(--primary); color: white; }
 .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
 
-/* Modals */
-#modal-container, #series-modal-container {
+/* Modal Improvements */
+#modal-container {
     position: fixed;
     inset: 0;
     z-index: 11000;
-    background: rgba(0,0,0,0.85);
+    background: rgba(0,0,0,0.8);
     backdrop-filter: blur(8px);
     display: none;
     align-items: center;
     justify-content: center;
 }
-.modal { width: 100%; max-width: 550px; padding: 2rem; }
+.modal { width: 100%; max-width: 550px; }
 
 .form-row {
     display: flex;
@@ -241,13 +234,4 @@ input[type="week"]::-webkit-calendar-picker-indicator {
     max-width: 420px;
     text-align: center;
     border: 1px solid var(--border);
-}
-
-/* Print Control - CRITICAL FIX */
-.print-only { display: none !important; }
-@media print {
-    .print-only { display: block !important; }
-    body * { visibility: hidden; }
-    #print-area, #print-area * { visibility: visible; }
-    #print-area { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; color: black; display: block !important; }
 }
