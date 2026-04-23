@@ -23,6 +23,10 @@ const periods = {
 
 // --- Initialization ---
 window.onload = async () => {
+    const now = new Date();
+    const week = getWeekNumber(now);
+    document.getElementById('week-selector').value = `${now.getFullYear()}-W${String(week).padStart(2, '0')}`;
+
     const savedUser = localStorage.getItem('sace_user');
     if (savedUser) {
         state.user = JSON.parse(savedUser);
@@ -30,10 +34,6 @@ window.onload = async () => {
         updateUserInfo();
         await initDashboard();
     }
-    
-    const now = new Date();
-    const week = getWeekNumber(now);
-    document.getElementById('week-selector').value = `${now.getFullYear()}-W${String(week).padStart(2, '0')}`;
 };
 
 function getWeekNumber(d) {
