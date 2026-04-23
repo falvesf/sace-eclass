@@ -1,8 +1,7 @@
 :root {
     --primary: #6366f1;
-    --primary-dark: #4f46e5;
     --background: #0f172a;
-    --card-bg: rgba(30, 41, 59, 0.7);
+    --card-bg: #1e293b;
     --text-main: #ffffff;
     --text-muted: #94a3b8;
     --border: rgba(255, 255, 255, 0.1);
@@ -19,183 +18,181 @@
 }
 
 body {
-    background: var(--background);
-    background-image: radial-gradient(circle at top right, rgba(99, 102, 241, 0.15), transparent),
-                      radial-gradient(circle at bottom left, rgba(99, 102, 241, 0.05), transparent);
+    background-color: var(--background);
     color: var(--text-main);
+    line-height: 1.6;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
 }
 
-/* Auth Overlay - Centered Card */
+/* Fix for Opaque Login Overlay */
 #auth-overlay {
     position: fixed;
-    inset: 0;
-    z-index: 9999;
-    background: var(--background);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    background-color: var(--background) !important; /* Ensure it blocks everything */
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1.5rem;
 }
 
 .auth-card {
     background: var(--card-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--border);
     padding: 3rem;
-    border-radius: 24px;
+    border-radius: 1.5rem;
     width: 100%;
-    max-width: 450px;
+    max-width: 400px;
     text-align: center;
+    border: 1px solid var(--border);
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
-.auth-card h1 {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
-    background: linear-gradient(to right, #818cf8, #c084fc);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+.g_id_signin {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
 }
 
-/* Main Container - Compact & Centered */
+/* Main Layout - COMPACT & CENTERED */
 .app-container {
-    width: 100%;
-    max-width: 1100px; /* Limite de largura para não esticar */
+    max-width: 1000px; /* Width limit you liked */
     margin: 0 auto;
-    padding: 2rem 1.5rem;
+    padding: 2rem 1rem;
 }
 
 header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 3rem;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
 }
 
 .nav-links {
     display: flex;
-    gap: 0.5rem;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 0.5rem;
-    border-radius: 16px;
+    gap: 10px;
 }
 
 .nav-link {
-    padding: 0.7rem 1.2rem;
     color: var(--text-muted);
     text-decoration: none;
-    border-radius: 12px;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
     font-size: 0.9rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
     cursor: pointer;
+    transition: 0.2s;
+}
+
+.nav-link:hover {
+    color: white;
 }
 
 .nav-link.active {
     background: var(--primary);
     color: white;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
-/* Sections & Cards */
+/* Cards */
 .card {
     background: var(--card-bg);
-    backdrop-filter: blur(10px);
     border: 1px solid var(--border);
-    padding: 2.5rem;
-    border-radius: 20px;
+    border-radius: 1rem;
+    padding: 2rem;
     margin-bottom: 2rem;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 h1 {
-    font-size: 2rem;
-    font-weight: 700;
+    font-size: 1.8rem;
     margin-bottom: 0.5rem;
 }
 
-/* Tables - Professional & Clean */
+.subtitle {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Tables */
 .data-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 1.5rem;
 }
 
 .data-table th {
     text-align: left;
-    padding: 1.2rem 1rem;
+    padding: 1rem;
     color: var(--text-muted);
     font-size: 0.8rem;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
     border-bottom: 1px solid var(--border);
 }
 
 .data-table td {
-    padding: 1.2rem 1rem;
+    padding: 1rem;
     border-bottom: 1px solid var(--border);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
 }
 
+/* Row Status Colors - Side indicator style */
 tr.row-sim { border-left: 4px solid var(--success); }
 tr.row-nao { border-left: 4px solid var(--danger); }
 tr.row-parcial { border-left: 4px solid var(--warning); }
 
-/* Buttons & Inputs */
+/* Buttons & Controls */
 .btn {
-    padding: 0.8rem 1.5rem;
-    border-radius: 12px;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
     border: none;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
 }
 
-.btn-primary {
-    background: var(--primary);
-    color: white;
-}
-
-.btn-primary:hover {
-    background: var(--primary-dark);
-    transform: translateY(-2px);
-}
+.btn-primary { background: var(--primary); color: white; }
+.btn-exit { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 6px; }
 
 input, select {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.2);
     border: 1px solid var(--border);
     color: white;
-    padding: 0.7rem 1rem;
-    border-radius: 10px;
+    padding: 0.5rem 0.8rem;
+    border-radius: 6px;
 }
 
-/* Reports - Controlled Size */
+/* Reports - Fixed size charts */
 .charts-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 2rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
 }
 
 canvas {
-    max-height: 300px; /* Garante que os gráficos não fiquem gigantes */
+    max-height: 250px;
 }
 
-/* Mobile Adjustments */
-@media (max-width: 768px) {
-    header { flex-direction: column; gap: 1.5rem; }
-    .card { padding: 1.5rem; }
-    .charts-grid { grid-template-columns: 1fr; }
+/* Modals */
+#modal-container, #series-modal-container {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 11000;
 }
 
-/* Print Only - Fixed */
+.modal {
+    width: 100%;
+    max-width: 500px;
+}
+
+/* Print Only */
 .print-only { display: none !important; }
 @media print {
     .print-only { display: block !important; }
     body * { visibility: hidden; }
     #print-area, #print-area * { visibility: visible; }
-    #print-area { position: absolute; inset: 0; background: white !important; color: black !important; padding: 2.5cm !important; }
+    #print-area { position: absolute; inset: 0; background: white; color: black; padding: 2cm; }
 }
