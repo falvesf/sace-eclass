@@ -368,19 +368,19 @@ async function updateTracking(teacherId, serie, status, observacao) {
     const currentStatus = status !== null ? status : (state.tracking[key][cacheId]?.status || 'Pendente');
     const currentObs = observacao !== null ? observacao : (state.tracking[key][cacheId]?.observacao || '');
 
-    // Optimistic UI Update for color
-    if (status !== null) {
-        const safeSerie = serie.replace(/\s+/g, '_').replace(/[^\w]/g, '');
-        const row = document.getElementById(`row-${teacherId}-${safeSerie}`);
-        if (row) {
-            row.classList.remove('row-sim', 'row-nao', 'row-parcial');
-            if (status === 'Sim') row.classList.add('row-sim');
-            else if (status === 'Não fez') row.classList.add('row-nao');
-            else if (status === 'Parcialmente') row.classList.add('row-parcial');
-        }
+    // Optimistic UI Update
+    const safeSerie = serie.replace(/\s+/g, '_').replace(/[^\w]/g, '');
+    const row = document.getElementById(`row-${teacherId}-${safeSerie}`);
+    if (row && status !== null) {
+        row.classList.remove('row-sim', 'row-nao', 'row-parcial');
+        if (status === 'Sim') row.classList.add('row-sim');
+        else if (status === 'Não fez') row.classList.add('row-nao');
+        else if (status === 'Parcialmente') row.classList.add('row-parcial');
     }
 
-    const { error } = await _supabase
+    console.log('Tentando salvar:', { teacherId, serie, key, currentStatus, currentObs });
+
+    const { data, error } = await _supabase
         .from('acompanhamento')
         .upsert({ 
             professor_id: teacherId, 
@@ -388,15 +388,16 @@ async function updateTracking(teacherId, serie, status, observacao) {
             periodo: key, 
             status: currentStatus,
             observacao: currentObs,
-            atualizado_por: state.user.name
+            atualizado_por: state.user ? state.user.name : 'Sistema'
         }, { onConflict: 'professor_id, periodo, serie' });
 
     if (error) {
-        console.error('Error updating tracking:', error);
-        alert('ERRO AO SALVAR: Verifique se você adicionou a coluna "observacao" no Supabase.\n\nDetalhes: ' + error.message);
-        // Re-render to revert to last saved state
+        console.error('ERRO SUPABASE:', error);
+        alert('ERRO AO SALVAR!\n\n' + error.message + '\n\nVerifique se você rodou o comando de UNIQUE no SQL Editor.');
+        // Revert UI if error
         await renderTrackingList(true);
     } else {
+        console.log('Salvo com sucesso!');
         state.tracking[key][cacheId] = { status: currentStatus, observacao: currentObs };
         if (status !== null) await renderTrackingList(false); 
     }
