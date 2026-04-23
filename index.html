@@ -10,7 +10,6 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Plugin para mostrar números nos gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 </head>
 <body>
@@ -18,15 +17,10 @@
         <div class="auth-card">
             <h1>SACE</h1>
             <p style="color: var(--text-muted); margin-bottom: 2rem;">Acesse o Sistema de Controle E-Class</p>
-            
-            <div id="g_id_onload"
-                 data-client_id="845244510065-p2v6nrtp3h2re3qndp8bntu9m491873v.apps.googleusercontent.com"
-                 data-callback="handleCredentialResponse">
-            </div>
+            <div id="g_id_onload" data-client_id="845244510065-p2v6nrtp3h2re3qndp8bntu9m491873v.apps.googleusercontent.com" data-callback="handleCredentialResponse"></div>
             <div class="g_id_signin" data-type="standard"></div>
-
             <div style="margin: 2rem 0; border-top: 1px solid var(--border); padding-top: 2rem;">
-                <p style="font-size: 0.8rem; font-weight: bold; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary);">Acesso Rápido (Demonstração)</p>
+                <p style="font-size: 0.8rem; font-weight: bold; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary);">Acesso Rápido</p>
                 <div class="form-group">
                     <input type="text" id="login-name" placeholder="Seu Nome">
                 </div>
@@ -36,7 +30,7 @@
                         <option value="Diretor">Diretor</option>
                     </select>
                 </div>
-                <button class="btn btn-primary" style="width: 100%;" onclick="internalLogin()">Entrar no Sistema</button>
+                <button class="btn btn-primary" style="width: 100%;" onclick="internalLogin()">Entrar</button>
             </div>
         </div>
     </div>
@@ -46,7 +40,7 @@
             <div class="logo">
                 <h2 style="display: flex; align-items: center; gap: 10px;">
                     <div style="background: var(--primary); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem;">E</div>
-                    SACE <span style="font-weight: 400; font-size: 0.8rem; color: var(--text-muted);">E-Class Control</span>
+                    SACE
                 </h2>
             </div>
             <nav class="nav-links">
@@ -58,40 +52,34 @@
             </nav>
             <div id="user-info" style="display: flex; align-items: center; gap: 15px;">
                 <div style="text-align: right;">
-                    <div id="user-name" style="font-weight: 700; font-size: 0.9rem; color: white;"></div>
-                    <div id="user-role-label" style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Coordenador</div>
+                    <div id="user-name" style="font-weight: 700; font-size: 0.9rem;"></div>
+                    <div id="user-role-label" style="font-size: 0.7rem; color: var(--text-muted);">COORDENADOR</div>
                 </div>
                 <button class="btn-exit" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
             </div>
         </header>
 
         <main>
-            <!-- Tracking Section -->
+            <!-- Tracking -->
             <section id="section-tracking" class="section">
-                <div class="sticky-controls">
+                <div class="sticky-wrapper">
                     <div class="section-header">
-                        <div>
-                            <h1>Acompanhamento Semanal</h1>
-                            <p class="subtitle">Controle de preenchimento do sistema E-Class</p>
-                        </div>
-                        
-                        <div class="filter-bar">
-                            <input type="text" id="filter-prof" placeholder="Buscar Professor..." oninput="renderTrackingList(false)">
-                            <input type="text" id="filter-serie" placeholder="Buscar Série..." oninput="renderTrackingList(false)">
-                            <select id="period-type">
-                                <option value="weekly">Semanal</option>
-                            </select>
-                            <input type="week" id="week-selector">
-                        </div>
+                        <h1>Acompanhamento Semanal</h1>
+                        <p class="subtitle">Controle de preenchimento do sistema E-Class</p>
+                    </div>
+                    <div class="filter-bar">
+                        <input type="text" id="filter-prof" placeholder="Buscar Professor..." oninput="renderTrackingList(false)">
+                        <input type="text" id="filter-serie" placeholder="Buscar Série..." oninput="renderTrackingList(false)">
+                        <select id="period-type"><option value="weekly">Semanal</option></select>
+                        <input type="week" id="week-selector">
                     </div>
                 </div>
-
                 <div class="card table-card">
                     <table class="data-table">
                         <thead>
                             <tr>
                                 <th onclick="toggleSort('nome')" class="sortable">Professor <i class="fas fa-sort"></i></th>
-                                <th onclick="toggleSort('serie')" class="sortable">Séries/Vínculo <i class="fas fa-sort"></i></th>
+                                <th onclick="toggleSort('serie')" class="sortable">Séries <i class="fas fa-sort"></i></th>
                                 <th onclick="toggleSort('status')" class="sortable">Status <i class="fas fa-sort"></i></th>
                                 <th>Observação / Ação</th>
                             </tr>
@@ -101,11 +89,13 @@
                 </div>
             </section>
 
-            <!-- Teachers Section -->
+            <!-- Teachers -->
             <section id="section-teachers" class="section" style="display: none;">
-                <div class="section-header">
-                    <h1>Cadastro de Professores</h1>
-                    <button class="btn btn-primary" onclick="openTeacherModal()"><i class="fas fa-plus"></i> Novo Professor</button>
+                <div class="sticky-wrapper">
+                    <div class="section-header">
+                        <h1>Cadastro de Professores</h1>
+                        <button class="btn btn-primary" onclick="openTeacherModal()"><i class="fas fa-plus"></i> Novo Professor</button>
+                    </div>
                 </div>
                 <div class="card table-card">
                     <table class="data-table">
@@ -122,20 +112,20 @@
                 </div>
             </section>
 
-            <!-- Series Section -->
+            <!-- Series -->
             <section id="section-series" class="section" style="display: none;">
                 <div style="display: flex; flex-direction: column; align-items: center;">
-                    <div class="section-header" style="width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center;">
-                        <h1>Séries</h1>
+                    <div class="section-header" style="width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h1>Gerenciamento de Séries</h1>
                         <button class="btn btn-primary" onclick="openSeriesModal()"><i class="fas fa-plus"></i> Nova Série</button>
                     </div>
                     <div class="card table-card" style="width: 100%; max-width: 600px;">
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Nome da Série</th>
-                                    <th style="text-align: right;">Ações</th>
-                                }
+                                    <th style="padding-left: 20px;">Nome da Série</th>
+                                    <th style="text-align: right; padding-right: 20px;">Ações</th>
+                                </tr>
                             </thead>
                             <tbody id="series-list"></tbody>
                         </table>
@@ -143,132 +133,82 @@
                 </div>
             </section>
 
-            <!-- Reports Section -->
+            <!-- Reports -->
             <section id="section-reports" class="section" style="display: none;">
                 <div class="section-header">
-                    <div>
-                        <h1>Relatórios Analíticos</h1>
-                        <p class="subtitle">Desempenho de preenchimento por período</p>
-                    </div>
+                    <h1>Relatórios</h1>
                     <select id="report-period" style="width: auto;">
                         <option value="daily">Diário</option>
                         <option value="weekly" selected>Semanal</option>
                         <option value="monthly">Mensal</option>
-                        <option value="bimestral">Bimestral</option>
-                        <option value="trimestral">Trimestral</option>
-                        <option value="semestral">Semestral</option>
-                        <option value="anual">Anual</option>
                     </select>
                 </div>
-                
                 <div class="charts-grid">
                     <div class="card">
-                        <h3>Visão Geral de Adesão</h3>
-                        <div class="chart-container">
-                            <canvas id="mainChart"></canvas>
-                        </div>
+                        <h3>Visão Geral</h3>
+                        <div class="chart-container"><canvas id="mainChart"></canvas></div>
                     </div>
                     <div class="card">
-                        <h3>Tendência Temporal</h3>
-                        <div class="chart-container">
-                            <canvas id="trendChart"></canvas>
-                        </div>
+                        <h3>Tendência</h3>
+                        <div class="chart-container"><canvas id="trendChart"></canvas></div>
                     </div>
                 </div>
             </section>
 
-            <!-- Config Section -->
+            <!-- Config -->
             <section id="section-config" class="section" style="display: none;">
                 <div class="card">
-                    <h2><i class="fas fa-cog"></i> Configurações do Sistema</h2>
-                    <div class="config-grid">
+                    <h2>Configurações</h2>
+                    <div class="config-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
                         <div class="form-group">
-                            <label>Cidade - UF (Para o Termo)</label>
-                            <input type="text" id="config-cidade-uf" placeholder="Ex: São Paulo - SP">
+                            <label>Cidade - UF</label>
+                            <input type="text" id="config-cidade-uf">
                         </div>
                         <div class="form-group">
                             <label>Assinatura Digital</label>
-                            <div class="signature-control">
-                                <button class="btn" onclick="document.getElementById('signature-upload').click()">Escolher Imagem</button>
-                                <input type="file" id="signature-upload" style="display: none;" onchange="handleSignatureUpload(this)">
-                                <div id="signature-preview-container" style="display: none;">
-                                    <img id="signature-preview">
-                                </div>
-                            </div>
+                            <button class="btn" onclick="document.getElementById('signature-upload').click()">Subir Imagem</button>
+                            <input type="file" id="signature-upload" style="display: none;" onchange="handleSignatureUpload(this)">
                         </div>
                     </div>
-                    <div class="config-footer">
-                        <button class="btn btn-primary" onclick="saveConfig()">Salvar Alterações</button>
-                    </div>
+                    <button class="btn btn-primary" onclick="saveConfig()" style="margin-top: 20px;">Salvar</button>
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- Modals -->
-    <div id="modal-container">
+    <!-- Modals (Outside main flow) -->
+    <div id="modal-container" style="display: none;">
         <div class="card modal">
-            <h2 id="modal-title">Novo Professor</h2>
-            <div class="modal-form">
-                <div class="form-group">
-                    <label>Nome Completo</label>
-                    <input type="text" id="prof-name">
-                </div>
-                <div class="form-row">
-                    <label>Tipo de Docência</label>
-                    <select id="prof-type">
-                        <option value="regente">Regente</option>
-                        <option value="especialista">Especialista</option>
-                        <option value="hibrido">Híbrido (Regente/Especialista)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Vincular Séries</label>
-                    <div id="series-picker" class="scroll-box"></div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn" onclick="closeModal()">Cancelar</button>
-                <button class="btn btn-primary" onclick="saveTeacher()">Salvar Professor</button>
-            </div>
+            <h2 id="modal-title">Professor</h2>
+            <div class="form-group"><label>Nome</label><input type="text" id="prof-name"></div>
+            <div class="form-row"><label>Tipo</label><select id="prof-type"><option value="regente">Regente</option><option value="especialista">Especialista</option><option value="hibrido">Híbrido</option></select></div>
+            <div class="form-group"><label>Séries</label><div id="series-picker" class="scroll-box"></div></div>
+            <div class="modal-footer"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveTeacher()">Salvar</button></div>
         </div>
     </div>
 
-    <div id="series-modal-container">
+    <div id="series-modal-container" style="display: none;">
         <div class="card modal">
             <h2>Nova Série</h2>
-            <div class="form-group" style="margin-top: 20px;">
-                <label>Nome da Série/Turma</label>
-                <input type="text" id="series-name" placeholder="Ex: 1º ano A">
-            </div>
-            <div class="modal-footer">
-                <button class="btn" onclick="closeSeriesModal()">Cancelar</button>
-                <button class="btn btn-primary" onclick="saveSeries()">Cadastrar Série</button>
-            </div>
+            <div class="form-group"><label>Nome</label><input type="text" id="series-name"></div>
+            <div class="modal-footer"><button class="btn" onclick="closeSeriesModal()">Cancelar</button><button class="btn btn-primary" onclick="saveSeries()">Cadastrar</button></div>
         </div>
     </div>
 
-    <!-- Print Area -->
-    <div id="print-area" class="print-only">
-        <div class="print-header">TERMO DE CIÊNCIA E COMPROMISSO SEMANAL</div>
+    <!-- Print Area (Hidden) -->
+    <div id="print-area" class="print-only" style="display: none;">
+        <div class="print-header">TERMO DE CIÊNCIA</div>
         <table class="print-info-table">
-            <tr><td class="label">Docente:</td><td id="print-prof-name" style="font-weight: 700;"></td></tr>
-            <tr><td class="label">Série/Turma:</td><td id="print-prof-grades"></td></tr>
-            <tr><td class="label">Período:</td><td id="print-week"></td></tr>
+            <tr><td>Docente:</td><td id="print-prof-name"></td></tr>
+            <tr><td>Série:</td><td id="print-prof-grades"></td></tr>
+            <tr><td>Período:</td><td id="print-week"></td></tr>
         </table>
-        <div class="print-section">
-            <p><strong>1. Do Objeto:</strong> O docente declara ciência da pendência semanal de abastecimento de dados no sistema E-Class.</p>
-            <p><strong>2. Do Prazo:</strong> Compromete-se a regularizar a situação em até 24 horas úteis.</p>
-        </div>
         <div class="print-footer">
             <p><span id="print-city-uf"></span>, <span id="print-date"></span></p>
-            <div style="display-signature">
-                <div class="sign-line">
-                    <strong id="print-prof-sign-name"></strong><br>Assinatura do Docente
-                </div>
-                <div class="sign-line">
-                    <img id="print-coord-signature" style="max-height: 50px; display: none;">
-                    <strong id="print-coord-name"></strong><br>Coordenação Pedagógica
+            <div style="display: flex; justify-content: space-between; margin-top: 50px;">
+                <div style="border-top: 1px solid #000; width: 40%;">Assinatura Docente</div>
+                <div style="border-top: 1px solid #000; width: 40%; text-align: center;">
+                    <img id="print-coord-signature" style="max-height: 40px; display: none;"><br>Coordenação
                 </div>
             </div>
         </div>
