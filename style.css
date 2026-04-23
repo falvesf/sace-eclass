@@ -25,6 +25,7 @@ body {
         radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.05) 0px, transparent 50%);
     color: var(--text-main);
     min-height: 100vh;
+    color-scheme: dark; /* Garante que ícones nativos como o do input week fiquem claros */
 }
 
 /* Opaque Login Overlay */
@@ -114,7 +115,7 @@ header {
 h1 { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.02em; }
 .subtitle { color: var(--text-muted); margin-top: 0.3rem; }
 
-/* Tables */
+/* Tables - FULL ROW COLORING */
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table th {
     text-align: left;
@@ -124,24 +125,30 @@ h1 { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.02em; }
     text-transform: uppercase;
     letter-spacing: 0.05em;
     border-bottom: 1px solid var(--border);
-    background: rgba(255,255,255,0.02);
 }
-.data-table td { padding: 1.2rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
+.data-table td { padding: 1.2rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.95rem; transition: 0.3s; }
 
-tr.row-sim { border-left: 4px solid var(--success); }
-tr.row-nao { border-left: 4px solid var(--danger); }
-tr.row-parcial { border-left: 4px solid var(--warning); }
+/* Linhas com cores de status (fundo suave para legibilidade) */
+tr.row-sim td { background-color: rgba(16, 185, 129, 0.15) !important; }
+tr.row-nao td { background-color: rgba(239, 68, 68, 0.15) !important; }
+tr.row-parcial td { background-color: rgba(245, 158, 11, 0.15) !important; }
 
-/* Form Elements */
+/* Form Elements - HIGH CONTRAST */
 input, select {
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(15, 23, 42, 0.8) !important; /* Fundo escuro fixo */
     border: 1px solid var(--border);
-    color: white;
+    color: #ffffff !important; /* Texto branco nítido */
     padding: 0.7rem 1rem;
     border-radius: 10px;
     transition: 0.2s;
 }
 input:focus { border-color: var(--primary); outline: none; background: rgba(0,0,0,0.3); }
+
+/* Ajuste específico para o ícone do calendário */
+input[type="week"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
 
 .btn {
     padding: 0.7rem 1.4rem;
@@ -183,5 +190,4 @@ input:focus { border-color: var(--primary); outline: none; background: rgba(0,0,
     body * { visibility: hidden; }
     #print-area, #print-area * { visibility: visible; }
     #print-area { position: absolute; inset: 0; background: white; color: black; padding: 2cm; }
-    .app-container { display: none !important; }
 }

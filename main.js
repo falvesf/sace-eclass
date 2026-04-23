@@ -579,6 +579,10 @@ function getTrendLabels(type) {
         case 'daily': return ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
         case 'weekly': return ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'];
         case 'monthly': return ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
+        case 'bimestral': return ['Bim 1', 'Bim 2', 'Bim 3', 'Bim 4', 'Bim 5', 'Bim 6'];
+        case 'trimestral': return ['Tri 1', 'Tri 2', 'Tri 3', 'Tri 4'];
+        case 'semestral': return ['Sem 1', 'Sem 2'];
+        case 'anual': return ['2023', '2024', '2025', '2026'];
         default: return ['P1', 'P2', 'P3', 'P4'];
     }
 }
