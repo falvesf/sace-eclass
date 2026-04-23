@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SACE - Sistema de Acompanhamento E-Class</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Auth Overlay -->
+        <div id="auth-overlay" class="no-print" style="position: fixed; inset: 0; background: var(--bg-dark); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2rem;">
+            <div class="glass-card" style="width: 100%; max-width: 400px; text-align: center;">
+                <h1 style="font-size: 2.5rem; color: var(--primary); margin-bottom: 0.5rem;">SACE</h1>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">Acesse o Sistema de Controle E-Class</p>
+                
+                <!-- Google Login Section -->
+                <div style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem;">
+                    <div id="g_id_onload"
+                         data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+                         data-callback="handleCredentialResponse"
+                         data-auto_prompt="false">
+                    </div>
+                    <div class="g_id_signin" data-type="standard"></div>
+                    <small style="display: block; margin-top: 0.5rem; color: var(--text-muted); font-size: 0.7rem;">Requer configuração de Client ID</small>
+                </div>
+
+                <!-- Demo Login Section -->
+                <div style="text-align: left;">
+                    <p style="font-weight: 600; margin-bottom: 1rem; text-align: center;">Acesso Rápido (Demonstração)</p>
+                    <div class="form-group">
+                        <label>Seu Nome</label>
+                        <input type="text" id="login-name" placeholder="Ex: Coord. Maria">
+                    </div>
+                    <div class="form-group">
+                        <label>Seu Cargo</label>
+                        <select id="login-role">
+                            <option value="Coordenador">Coordenador</option>
+                            <option value="Professor">Professor</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="internalLogin()">Entrar no Sistema</button>
+                </div>
+            </div>
+        </div>
+
+        <nav class="no-print glass-card" style="margin: 1rem; border-radius: 12px;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 40px; height: 40px; background: var(--primary); border-radius: 8px; display: grid; place-items: center; font-weight: bold;">E</div>
+                <h2 style="font-size: 1.2rem;">SACE <span style="color: var(--text-muted); font-weight: normal; font-size: 0.8rem;">E-Class Control</span></h2>
+            </div>
+            <div class="nav-links">
+                <a class="nav-link active" onclick="showSection('tracking')">Acompanhamento</a>
+                <a class="nav-link" onclick="showSection('teachers')">Professores</a>
+                <a class="nav-link" onclick="showSection('series')">Séries</a>
+                <a class="nav-link" onclick="showSection('reports')">Relatórios</a>
+            </div>
+            <div id="user-info" style="display: flex; align-items: center; gap: 1rem;">
+                <span id="user-role" class="glass-card" style="padding: 0.2rem 0.6rem; font-size: 0.7rem; border-color: var(--primary);">Coordenador</span>
+                <span id="user-name" style="font-size: 0.9rem;">...</span>
+                <button class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background: rgba(239, 68, 68, 0.1); color: var(--danger);" onclick="logout()">Sair</button>
+            </div>
+        </nav>
+
+        <main class="container no-print">
+            <!-- Tracking Section -->
+            <section id="section-tracking" class="section">
+                <div id="tracking-controls" style="position: sticky; top: 70px; background: var(--bg-dark); z-index: 10; padding: 1rem 0; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <div>
+                            <h1>Acompanhamento Semanal</h1>
+                            <p style="color: var(--text-muted);">Controle de preenchimento do sistema E-Class</p>
+                        </div>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            <input type="text" id="filter-prof" class="status-select" placeholder="Buscar Professor..." style="width: 180px;" oninput="renderTrackingList()">
+                            <input type="text" id="filter-serie" class="status-select" placeholder="Buscar Série..." style="width: 150px;" oninput="renderTrackingList()">
+                            <select id="period-type" class="status-select" style="width: 120px;">
+                                <option value="daily">Diário</option>
+                                <option value="weekly" selected>Semanal</option>
+                                <option value="fortnightly">Quinzenal</option>
+                                <option value="monthly">Mensal</option>
+                            </select>
+                            <input type="week" id="week-selector" class="status-select" style="width: 180px;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <table class="data-table">
+                        <thead style="position: sticky; top: 185px; background: #1e293b; z-index: 5;">
+                            <tr>
+                                <th class="sortable" onclick="toggleSort('nome')">Professor</th>
+                                <th class="sortable" onclick="toggleSort('serie')">Séries/Vínculo</th>
+                                <th class="sortable" onclick="toggleSort('status')">Status</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tracking-list">
+                            <!-- JS populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Teachers Section -->
+            <section id="section-teachers" class="section" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <div>
+                        <h1>Cadastro de Professores</h1>
+                        <p style="color: var(--text-muted);">Gerencie a listagem e vínculos</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openTeacherModal()">+ Novo Professor</button>
+                </div>
+
+                <div class="glass-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Tipo</th>
+                                <th>Séries</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacher-list">
+                            <!-- JS populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Series Section -->
+            <section id="section-series" class="section" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <div>
+                        <h1>Gerenciamento de Séries</h1>
+                        <p style="color: var(--text-muted);">Cadastre as séries/turmas da escola</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openSeriesModal()">+ Nova Série</button>
+                </div>
+
+                <div class="glass-card" style="max-width: 600px;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nome da Série</th>
+                                <th style="text-align: right;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="series-list">
+                            <!-- JS populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Reports Section -->
+            <section id="section-reports" class="section" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <div>
+                        <h1>Relatórios Analíticos</h1>
+                        <p style="color: var(--text-muted);">Desempenho de preenchimento por período</p>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <select id="report-period" class="status-select">
+                            <option value="daily">Diário</option>
+                            <option value="weekly" selected>Semanal</option>
+                            <option value="fortnightly">Quinzenal</option>
+                            <option value="monthly">Mensal</option>
+                            <option value="bimonthly">Bimestral</option>
+                            <option value="trimestral">Trimestral</option>
+                            <option value="semestral">Semestral</option>
+                            <option value="annual">Anual</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="glass-card">
+                        <h3>Visão Geral de Adesão</h3>
+                        <canvas id="mainChart"></canvas>
+                    </div>
+                    <div class="glass-card">
+                        <h3>Tendência Temporal</h3>
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Modals -->
+        <div id="modal-container" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center;">
+            <div class="glass-card" style="width: 100%; max-width: 500px;">
+                <h2 id="modal-title">Novo Professor</h2>
+                <div style="margin-top: 1.5rem;">
+                    <div class="form-group">
+                        <label>Nome Completo</label>
+                        <input type="text" id="prof-name" placeholder="Ex: Maria Silva">
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Docente</label>
+                        <select id="prof-type" onchange="toggleGradesLimit()">
+                            <option value="regente">Regente (Máx 2 séries)</option>
+                            <option value="especialista">Especialista (Livre)</option>
+                            <option value="hibrido">Híbrido (Regente/Especialista)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Vincular Séries</label>
+                        <div id="series-picker" class="glass-card" style="max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 8px;">
+                            <!-- JS checkboxes populated here -->
+                            <p style="color: var(--text-muted); font-size: 0.8rem; text-align: center;">Cadastre séries na aba "Séries" primeiro.</p>
+                        </div>
+                        <small id="grades-help" style="color: var(--text-muted);"></small>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                        <button class="btn" style="background: rgba(255,255,255,0.1);" onclick="closeModal()">Cancelar</button>
+                        <button class="btn btn-primary" onclick="saveTeacher()">Salvar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Series Modal -->
+        <div id="series-modal-container" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center;">
+            <div class="glass-card" style="width: 100%; max-width: 400px;">
+                <h2>Nova Série</h2>
+                <div style="margin-top: 1.5rem;">
+                    <div class="form-group">
+                        <label>Nome da Série/Turma</label>
+                        <input type="text" id="series-name" placeholder="Ex: 1º Ano A">
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                        <button class="btn" style="background: rgba(255,255,255,0.1);" onclick="closeSeriesModal()">Cancelar</button>
+                        <button class="btn btn-primary" onclick="saveSeries()">Salvar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Term to Print -->
+        <div id="print-area" class="print-only" style="background: white; padding: 40px; min-height: 100vh;">
+            <div class="term-content" style="max-width: 800px; margin: 0 auto; color: black;">
+                <div class="term-header">
+                    TERMO DE CIÊNCIA E COMPROMISSO SEMANAL – LANÇAMENTO DE DADOS (E-CLASS)
+                </div>
+                
+                <p><strong>Identificação do Docente:</strong></p>
+                <table class="term-table">
+                    <tr>
+                        <td style="background: #f9f9f9; width: 30%;"><strong>Nome:</strong></td>
+                        <td id="print-prof-name"></td>
+                    </tr>
+                    <tr>
+                        <td style="background: #f9f9f9;"><strong>Disciplina(s) / Séries:</strong></td>
+                        <td id="print-prof-grades"></td>
+                    </tr>
+                    <tr>
+                        <td style="background: #f9f9f9;"><strong>Semana de Referência:</strong></td>
+                        <td id="print-week"></td>
+                    </tr>
+                </table>
+
+                <div class="term-section-title">1. Do Objeto e Frequência</div>
+                <p>Pelo presente termo, o docente acima identificado declara estar ciente da pendência relativa ao abastecimento semanal de informações acadêmicas no sistema <strong>E-Class</strong>. Este documento constitui um registro de acompanhamento recorrente para garantir a atualização do sistema conforme as diretrizes institucionais.</p>
+
+                <div class="term-section-title">2. Das Pendências Identificadas</div>
+                <p>As informações referentes à semana supracitada que não foram localizadas no sistema incluem:</p>
+                <ul>
+                    <li>Lançamento de conteúdos ministrados;</li>
+                    <li>Postagem de materiais de apoio e tarefas;</li>
+                    <li>Atualização de notas de atividades semanais (se aplicável).</li>
+                </ul>
+
+                <div class="term-section-title">3. Do Prazo de Regularização</div>
+                <p>O docente compromete-se a regularizar a alimentação dos dados da referida semana no sistema <strong>impreterivelmente em até 24 horas</strong> após a assinatura deste termo, visando manter a transparência para alunos e responsáveis.</p>
+
+                <div class="term-section-title">4. Da Ciência e Responsabilidade</div>
+                <p>A coordenação reitera que o preenchimento semanal do E-Class é obrigatório e essencial para o fluxo de trabalho da secretaria e do acompanhamento pedagógico.</p>
+
+                <div style="margin-top: 3rem;">
+                    [Cidade - UF], <span id="print-date"></span>
+                </div>
+
+                <div class="signature-space">
+                    <div>
+                        <div class="signature-line" style="margin-top: 1rem;"></div>
+                        <p><strong id="print-prof-sign-name"></strong></p>
+                        <p>Docente</p>
+                    </div>
+                    <div>
+                        <div style="height: 60px; display: flex; align-items: flex-end; justify-content: center;">
+                            <!-- Espaço para assinatura digital da coordenação -->
+                            <span style="font-family: 'Dancing Script', cursive; font-size: 2rem; color: #1e3a8a; font-weight: normal; font-style: italic;" id="coord-signature-display">Assinatura Digital</span>
+                        </div>
+                        <div class="signature-line"></div>
+                        <p><strong id="print-coord-name">Coordenadora</strong></p>
+                        <p>Coordenação Acadêmica</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
