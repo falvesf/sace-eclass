@@ -512,21 +512,33 @@ async function renderReports() {
     const periodType = document.getElementById('period-type').value;
     const currentKey = `${periodType}-${periodValue}`;
 
-    // Filtrar apenas dados da semana/período ATUAL para evitar contagem dobrada
+    // 1. Buscar registros existentes
     const { data: allTracking, error } = await _supabase
         .from('acompanhamento')
         .select('status')
         .eq('periodo', currentKey);
     
+    // 2. Calcular total esperado de registros
+    let totalExpected = 0;
+    state.teachers.forEach(t => {
+        if (t.series) totalExpected += t.series.length;
+    });
+
     const stats = { sim: 0, nao: 0, parcial: 0, pendente: 0 };
+    let totalRecorded = 0;
+
     if (!error && allTracking) {
         allTracking.forEach(item => {
             if (item.status === 'Sim') stats.sim++;
             else if (item.status === 'Não fez') stats.nao++;
             else if (item.status === 'Parcialmente') stats.parcial++;
             else stats.pendente++;
+            totalRecorded++;
         });
     }
+
+    // 3. Pendentes reais = (Já marcados como pendente) + (Quem ainda não tem registro)
+    stats.pendente += (totalExpected - totalRecorded);
 
     if (mainChart) mainChart.destroy();
     mainChart = new Chart(ctxMain, {
@@ -547,7 +559,7 @@ async function renderReports() {
                 datalabels: {
                     color: '#fff',
                     font: { weight: 'bold', size: 14 },
-                    formatter: (value) => value > 0 ? value : '' // Só mostra se for > 0
+                    formatter: (value) => value > 0 ? value : ''
                 }
             }
         }
