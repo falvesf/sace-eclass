@@ -11,7 +11,7 @@ let state = {
     tracking: {}, 
     currentSection: 'tracking',
     editingTeacherId: null,
-    sortConfig: { key: 'nome', direction: 'asc' } // Current sort settings
+    sortConfig: { key: 'nome', direction: 'asc' }
 };
 
 const periods = {
@@ -249,7 +249,10 @@ async function fetchTracking(periodType, periodValue) {
         state.tracking[key] = {};
         data.forEach(item => {
             const cacheId = `${item.professor_id}_${item.serie}`;
-            state.tracking[key][cacheId] = item.status;
+            state.tracking[key][cacheId] = {
+                status: item.status,
+                observacao: item.observacao || ''
+            };
         });
     }
 }
@@ -284,13 +287,14 @@ async function renderTrackingList() {
             if (filterSerie && !serie.toLowerCase().includes(filterSerie)) return;
 
             const cacheId = `${t.id}_${serie}`;
-            const status = state.tracking[key][cacheId] || 'Pendente';
+            const track = state.tracking[key][cacheId] || { status: 'Pendente', observacao: '' };
             
             rowsData.push({
                 id: t.id,
                 nome: t.nome,
                 serie: serie,
-                status: status
+                status: track.status,
+                observacao: track.observacao
             });
         });
     });
@@ -315,7 +319,7 @@ async function renderTrackingList() {
                 <td>${row.nome}</td>
                 <td>${row.serie}</td>
                 <td>
-                    <select class="status-select" onchange="updateStatus('${row.id}', '${row.serie}', this.value)">
+                    <select class="status-select" onchange="updateTracking('${row.id}', '${row.serie}', this.value, null)">
                         <option value="Pendente" ${row.status === 'Pendente' ? 'selected' : ''}>Pendente</option>
                         <option value="Sim" class="status-sim" ${row.status === 'Sim' ? 'selected' : ''}>Sim</option>
                         <option value="Não fez" class="status-nao" ${row.status === 'Não fez' ? 'selected' : ''}>Não fez</option>
@@ -323,7 +327,20 @@ async function renderTrackingList() {
                     </select>
                 </td>
                 <td>
-                    ${row.status === 'Não fez' ? `<button class="btn btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="printTerm('${row.id}', '${row.serie}')">Imprimir Termo</button>` : '-'}
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <input type="text" 
+                               class="status-select" 
+                               style="width: 100%; min-width: 150px; font-size: 0.85rem;" 
+                               placeholder="Adicionar observação..." 
+                               value="${row.observacao}"
+                               onblur="updateTracking('${row.id}', '${row.serie}', null, this.value)"
+                               onkeydown="if(event.key === 'Enter') this.blur()">
+                        
+                        ${row.status === 'Não fez' ? `
+                            <button class="btn btn-primary" style="padding: 0.2rem 0.6rem; font-size: 0.75rem; width: fit-content;" onclick="printTerm('${row.id}', '${row.serie}')">
+                                Imprimir Termo
+                            </button>` : ''}
+                    </div>
                 </td>
             </tr>
         `;
@@ -334,26 +351,31 @@ async function renderTrackingList() {
     }
 }
 
-async function updateStatus(teacherId, serie, status) {
+async function updateTracking(teacherId, serie, status, observacao) {
     const periodValue = document.getElementById('week-selector').value;
     const periodType = document.getElementById('period-type').value;
     const key = `${periodType}-${periodValue}`;
+    const cacheId = `${teacherId}_${serie}`;
     
+    // Get current values from cache if not provided
+    const currentStatus = status !== null ? status : (state.tracking[key][cacheId]?.status || 'Pendente');
+    const currentObs = observacao !== null ? observacao : (state.tracking[key][cacheId]?.observacao || '');
+
     const { error } = await _supabase
         .from('acompanhamento')
         .upsert({ 
             professor_id: teacherId, 
             serie: serie,
             periodo: key, 
-            status: status,
+            status: currentStatus,
+            observacao: currentObs,
             atualizado_por: state.user.name
         }, { onConflict: 'professor_id, periodo, serie' });
 
-    if (error) console.error('Error updating status:', error);
+    if (error) console.error('Error updating tracking:', error);
     else {
-        const cacheId = `${teacherId}_${serie}`;
-        state.tracking[key][cacheId] = status;
-        await renderTrackingList();
+        state.tracking[key][cacheId] = { status: currentStatus, observacao: currentObs };
+        if (status !== null) await renderTrackingList(); // Only re-render full list if status changed (to update colors/term button)
     }
 }
 
