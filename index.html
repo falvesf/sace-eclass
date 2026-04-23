@@ -6,13 +6,13 @@
     <title>SACE - E-Class Control</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <!-- Font Awesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <!-- Login Opaque Overlay -->
     <div id="auth-overlay">
         <div class="auth-card">
             <h1>SACE</h1>
@@ -22,10 +22,10 @@
                  data-client_id="845244510065-p2v6nrtp3h2re3qndp8bntu9m491873v.apps.googleusercontent.com"
                  data-callback="handleCredentialResponse">
             </div>
-            <div class="g_id_signin" data-type="standard"></div>
+            <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="filled_blue" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
 
             <div style="margin: 2rem 0; border-top: 1px solid var(--border); padding-top: 2rem;">
-                <p style="font-size: 0.8rem; font-weight: bold; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">Acesso Rápido (Demonstração)</p>
+                <p style="font-size: 0.8rem; font-weight: bold; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary);">Acesso Rápido (Demonstração)</p>
                 <div class="form-group">
                     <input type="text" id="login-name" placeholder="Seu Nome">
                 </div>
@@ -43,44 +43,59 @@
     <div class="app-container">
         <header>
             <div class="logo">
-                <h2>SACE <span style="font-weight: 400; font-size: 0.8rem; opacity: 0.6;">E-Class Control</span></h2>
+                <h2 style="display: flex; align-items: center; gap: 10px;">
+                    <div style="background: var(--primary); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem;">E</div>
+                    SACE <span style="font-weight: 400; font-size: 0.8rem; color: var(--text-muted);">E-Class Control</span>
+                </h2>
             </div>
             <nav class="nav-links">
-                <a class="nav-link active" onclick="showSection('tracking')">Acompanhamento</a>
-                <a class="nav-link" onclick="showSection('teachers')">Professores</a>
-                <a class="nav-link" onclick="showSection('series')">Séries</a>
-                <a class="nav-link" onclick="showSection('reports')">Relatórios</a>
-                <a class="nav-link" onclick="showSection('config')">Configurações</a>
+                <a class="nav-link active" onclick="showSection('tracking')"><i class="fas fa-list-check"></i> Acompanhamento</a>
+                <a class="nav-link" onclick="showSection('teachers')"><i class="fas fa-users"></i> Professores</a>
+                <a class="nav-link" onclick="showSection('series')"><i class="fas fa-layer-group"></i> Séries</a>
+                <a class="nav-link" onclick="showSection('reports')"><i class="fas fa-chart-pie"></i> Relatórios</a>
+                <a class="nav-link" onclick="showSection('config')"><i class="fas fa-cog"></i></a>
             </nav>
-            <div id="user-info" style="display: flex; align-items: center; gap: 10px;">
-                <span id="user-name" style="font-weight: 600; font-size: 0.9rem;"></span>
-                <button class="btn-exit" onclick="logout()">Sair</button>
+            <div id="user-info" style="display: flex; align-items: center; gap: 15px;">
+                <div style="text-align: right;">
+                    <div id="user-name" style="font-weight: 700; font-size: 0.9rem; color: white;"></div>
+                    <div id="user-role-label" style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Coordenador</div>
+                </div>
+                <button class="btn-exit" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
             </div>
         </header>
 
         <main>
             <!-- Tracking Section -->
             <section id="section-tracking" class="section">
-                <div class="section-header">
-                    <div>
-                        <h1>Acompanhamento Semanal</h1>
+                <div class="section-header" style="margin-bottom: 2rem;">
+                    <div style="margin-bottom: 1.5rem;">
+                        <h1 style="font-size: 2.2rem; font-weight: 800;">Acompanhamento Semanal</h1>
                         <p class="subtitle">Controle de preenchimento do sistema E-Class</p>
                     </div>
-                    <div class="filters">
-                        <select id="period-type">
-                            <option value="weekly">Semanal</option>
-                        </select>
-                        <input type="week" id="week-selector">
+                    
+                    <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
+                        <div style="flex: 1; min-width: 200px;">
+                            <input type="text" id="filter-prof" placeholder="Buscar Professor..." oninput="renderTrackingList(false)" style="width: 100%;">
+                        </div>
+                        <div style="flex: 1; min-width: 200px;">
+                            <input type="text" id="filter-serie" placeholder="Buscar Série..." oninput="renderTrackingList(false)" style="width: 100%;">
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <select id="period-type" style="width: auto;">
+                                <option value="weekly">Semanal</option>
+                            </select>
+                            <input type="week" id="week-selector" style="width: auto;">
+                        </div>
                     </div>
                 </div>
 
-                <div class="card">
+                <div class="card" style="padding: 0; overflow: hidden; border-radius: 16px;">
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th onclick="toggleSort('nome')" class="sortable">Professor</th>
+                                <th onclick="toggleSort('nome')" class="sortable" style="padding-left: 20px;">Professor</th>
                                 <th onclick="toggleSort('serie')" class="sortable">Séries/Vínculo</th>
-                                <th>Status</th>
+                                <th style="width: 180px;">Status</th>
                                 <th>Observação / Ação</th>
                             </tr>
                         </thead>
@@ -91,18 +106,18 @@
 
             <!-- Teachers Section -->
             <section id="section-teachers" class="section" style="display: none;">
-                <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                     <h1>Cadastro de Professores</h1>
-                    <button class="btn btn-primary" onclick="openTeacherModal()">+ Novo Professor</button>
+                    <button class="btn btn-primary" onclick="openTeacherModal()"><i class="fas fa-plus"></i> Novo Professor</button>
                 </div>
-                <div class="card">
+                <div class="card" style="padding: 0; overflow: hidden; border-radius: 16px;">
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Nome</th>
+                                <th style="padding-left: 20px;">Nome</th>
                                 <th>Tipo</th>
                                 <th>Séries</th>
-                                <th style="text-align: right;">Ações</th>
+                                <th style="text-align: right; padding-right: 20px;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="teacher-list"></tbody>
@@ -112,16 +127,16 @@
 
             <!-- Series Section -->
             <section id="section-series" class="section" style="display: none;">
-                <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                     <h1>Gerenciamento de Séries</h1>
-                    <button class="btn btn-primary" onclick="openSeriesModal()">+ Nova Série</button>
+                    <button class="btn btn-primary" onclick="openSeriesModal()"><i class="fas fa-plus"></i> Nova Série</button>
                 </div>
-                <div class="card" style="max-width: 600px;">
+                <div class="card" style="max-width: 600px; padding: 0; overflow: hidden; border-radius: 16px;">
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Nome da Série</th>
-                                <th style="text-align: right;">Ações</th>
+                                <th style="padding-left: 20px;">Nome da Série</th>
+                                <th style="text-align: right; padding-right: 20px;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="series-list"></tbody>
@@ -131,17 +146,29 @@
 
             <!-- Reports Section -->
             <section id="section-reports" class="section" style="display: none;">
-                <h1>Relatórios Analíticos</h1>
-                <p class="subtitle">Desempenho de preenchimento por período</p>
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+                    <div>
+                        <h1>Relatórios Analíticos</h1>
+                        <p class="subtitle">Desempenho de preenchimento por período</p>
+                    </div>
+                    <select id="report-period" style="width: auto;">
+                        <option value="weekly">Semanal</option>
+                        <option value="monthly">Mensal</option>
+                    </select>
+                </div>
                 
                 <div class="charts-grid">
                     <div class="card">
-                        <h3>Visão Geral de Adesão</h3>
-                        <canvas id="mainChart"></canvas>
+                        <h3 style="margin-bottom: 1.5rem; font-size: 1rem; color: var(--text-muted);">Visão Geral de Adesão</h3>
+                        <div style="height: 250px; display: flex; align-items: center; justify-content: center;">
+                            <canvas id="mainChart"></canvas>
+                        </div>
                     </div>
                     <div class="card">
-                        <h3>Tendência Temporal</h3>
-                        <canvas id="trendChart"></canvas>
+                        <h3 style="margin-bottom: 1.5rem; font-size: 1rem; color: var(--text-muted);">Tendência Temporal</h3>
+                        <div style="height: 250px; display: flex; align-items: center; justify-content: center;">
+                            <canvas id="trendChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -149,21 +176,26 @@
             <!-- Config Section -->
             <section id="section-config" class="section" style="display: none;">
                 <div class="card">
-                    <h2>Configurações do Sistema</h2>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                    <h2><i class="fas fa-cog"></i> Configurações do Sistema</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 25px;">
                         <div class="form-group">
-                            <label>Cidade - UF</label>
-                            <input type="text" id="config-cidade-uf">
+                            <label>Cidade - UF (Para o Termo)</label>
+                            <input type="text" id="config-cidade-uf" placeholder="Ex: São Paulo - SP">
                         </div>
                         <div class="form-group">
-                            <label>Assinatura Digital</label>
-                            <input type="file" id="signature-upload" onchange="handleSignatureUpload(this)">
-                            <div id="signature-preview-container" style="margin-top: 10px; display: none;">
-                                <img id="signature-preview" style="max-height: 60px; filter: grayscale(1);">
+                            <label>Assinatura Digital (PNG Transparente)</label>
+                            <div style="display: flex; gap: 15px; align-items: center;">
+                                <button class="btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border);" onclick="document.getElementById('signature-upload').click()">Escolher Arquivo</button>
+                                <input type="file" id="signature-upload" style="display: none;" onchange="handleSignatureUpload(this)">
+                                <div id="signature-preview-container" style="display: none;">
+                                    <img id="signature-preview" style="max-height: 50px; filter: grayscale(1) brightness(1.2);">
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <button class="btn btn-primary" onclick="saveConfig()" style="margin-top: 20px;">Salvar Configurações</button>
+                    <div style="margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px; text-align: right;">
+                        <button class="btn btn-primary" onclick="saveConfig()">Salvar Alterações</button>
+                    </div>
                 </div>
             </section>
         </main>
@@ -177,20 +209,22 @@
                 <label>Nome Completo</label>
                 <input type="text" id="prof-name">
             </div>
-            <div class="form-group">
-                <label>Tipo de Docência</label>
-                <select id="prof-type" onchange="toggleGradesLimit()">
-                    <option value="regente">Regente</option>
-                    <option value="especialista">Especialista</option>
-                </select>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Tipo de Docência</label>
+                    <select id="prof-type" onchange="toggleGradesLimit()">
+                        <option value="regente">Regente</option>
+                        <option value="especialista">Especialista</option>
+                    </select>
+                </div>
             </div>
             <div class="form-group">
                 <label>Vincular Séries</label>
-                <div id="series-picker" style="max-height: 150px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 8px;"></div>
+                <div id="series-picker" style="max-height: 180px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 10px; border: 1px solid var(--border);"></div>
             </div>
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 25px;">
                 <button class="btn" onclick="closeModal()">Cancelar</button>
-                <button class="btn btn-primary" onclick="saveTeacher()">Salvar</button>
+                <button class="btn btn-primary" onclick="saveTeacher()">Salvar Professor</button>
             </div>
         </div>
     </div>
@@ -199,12 +233,12 @@
         <div class="card modal">
             <h2>Nova Série</h2>
             <div class="form-group" style="margin-top: 20px;">
-                <label>Nome da Série</label>
+                <label>Nome da Série/Turma</label>
                 <input type="text" id="series-name" placeholder="Ex: 1º ano A">
             </div>
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 25px;">
                 <button class="btn" onclick="closeSeriesModal()">Cancelar</button>
-                <button class="btn btn-primary" onclick="saveSeries()">Salvar</button>
+                <button class="btn btn-primary" onclick="saveSeries()">Cadastrar Série</button>
             </div>
         </div>
     </div>
@@ -213,24 +247,26 @@
     <div id="print-area" class="print-only">
         <div class="print-header">TERMO DE CIÊNCIA E COMPROMISSO SEMANAL</div>
         <table class="print-info-table">
-            <tr><td class="label">Professor:</td><td id="print-prof-name"></td></tr>
-            <tr><td class="label">Série:</td><td id="print-prof-grades"></td></tr>
-            <tr><td class="label">Semana:</td><td id="print-week"></td></tr>
+            <tr><td class="label">Docente:</td><td id="print-prof-name" style="font-weight: 700;"></td></tr>
+            <tr><td class="label">Série/Turma:</td><td id="print-prof-grades"></td></tr>
+            <tr><td class="label">Período:</td><td id="print-week"></td></tr>
         </table>
         <div class="print-section">
-            <strong>1. Do Objeto e Frequência</strong><br>
-            O docente declara ciência da pendência semanal no sistema E-Class.
+            <p><strong>1. Do Objeto:</strong> O docente declara ciência da pendência semanal de abastecimento de dados no sistema E-Class.</p>
+            <p><strong>2. Do Prazo:</strong> Compromete-se a regularizar a situação em até 24 horas úteis.</p>
         </div>
-        <div class="print-footer">
+        <div class="print-footer" style="margin-top: 40px;">
             <p><span id="print-city-uf"></span>, <span id="print-date"></span></p>
-            <div style="display: flex; justify-content: space-between; margin-top: 50px;">
-                <div style="text-align: center; border-top: 1px solid #000; width: 40%; padding-top: 5px;">
-                    <strong id="print-prof-sign-name"></strong><br>Docente
+            <div style="display: flex; justify-content: space-between; margin-top: 60px;">
+                <div style="text-align: center; border-top: 1px solid #000; width: 40%; padding-top: 8px; font-size: 10pt;">
+                    <strong id="print-prof-sign-name"></strong><br>Assinatura do Docente
                 </div>
                 <div style="text-align: center; width: 40%;">
-                    <img id="print-coord-signature" style="max-height: 50px; display: none; margin: 0 auto;">
-                    <div style="border-top: 1px solid #000; padding-top: 5px;">
-                        <strong id="print-coord-name"></strong><br>Coordenação
+                    <div style="min-height: 40px; display: flex; align-items: center; justify-content: center;">
+                        <img id="print-coord-signature" style="max-height: 50px; display: none;">
+                    </div>
+                    <div style="border-top: 1px solid #000; padding-top: 8px; font-size: 10pt;">
+                        <strong id="print-coord-name"></strong><br>Coordenação Pedagógica
                     </div>
                 </div>
             </div>

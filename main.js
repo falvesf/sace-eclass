@@ -85,8 +85,10 @@ async function completeAuth(name, role) {
 }
 
 function updateUserInfo() {
-    document.getElementById('user-name').textContent = state.user.name;
-    document.getElementById('user-role').textContent = state.user.role;
+    const nameEl = document.getElementById('user-name');
+    const roleEl = document.getElementById('user-role-label');
+    if (nameEl) nameEl.textContent = state.user.name;
+    if (roleEl) roleEl.textContent = state.user.role;
 }
 
 // --- Navigation ---
@@ -500,9 +502,16 @@ let mainChart = null;
 let trendChart = null;
 
 async function renderReports() {
-    const ctxMain = document.getElementById('mainChart').getContext('2d');
-    const ctxTrend = document.getElementById('trendChart').getContext('2d');
-    const reportPeriodType = document.getElementById('report-period').value;
+    const mainCanvas = document.getElementById('mainChart');
+    const trendCanvas = document.getElementById('trendChart');
+    if (!mainCanvas || !trendCanvas) return;
+
+    const ctxMain = mainCanvas.getContext('2d');
+    const ctxTrend = trendCanvas.getContext('2d');
+    
+    // Default to weekly if selector is missing
+    const periodEl = document.getElementById('report-period');
+    const reportPeriodType = periodEl ? periodEl.value : 'weekly';
     
     const { data: allTracking, error } = await _supabase.from('acompanhamento').select('status');
     
@@ -630,7 +639,11 @@ async function initDashboard() {
     await loadConfig(); // Prefetch config
 }
 
-// Bind events
-document.getElementById('period-type').addEventListener('change', () => renderTrackingList());
-document.getElementById('week-selector').addEventListener('change', () => renderTrackingList());
-document.getElementById('report-period').addEventListener('change', renderReports);
+// Bind events safely
+const periodTypeEl = document.getElementById('period-type');
+const weekSelectorEl = document.getElementById('week-selector');
+const reportPeriodEl = document.getElementById('report-period');
+
+if (periodTypeEl) periodTypeEl.addEventListener('change', () => renderTrackingList());
+if (weekSelectorEl) weekSelectorEl.addEventListener('change', () => renderTrackingList());
+if (reportPeriodEl) reportPeriodEl.addEventListener('change', renderReports);
