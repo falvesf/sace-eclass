@@ -249,10 +249,7 @@ async function saveTeacher() {
         alert('Professores regentes podem ter no máximo 2 séries vinculadas.');
         return;
     }
-    if (checked.length === 0) {
-        alert('Por favor, vincule pelo menos uma série.');
-        return;
-    }
+    // Híbrido e Especialista não possuem trava de quantidade de séries
 
     const payload = { nome: name, tipo: type, series: checked };
 
@@ -333,6 +330,8 @@ function toggleSort(key) {
         state.sortConfig.key = key;
         state.sortConfig.direction = 'asc';
     }
+    
+    // Feedback visual nos ícones (opcional, já que o CSS cuida da base)
     renderTrackingList(false);
 }
 
@@ -509,39 +508,47 @@ async function renderReports() {
     const ctxMain = mainCanvas.getContext('2d');
     const ctxTrend = trendCanvas.getContext('2d');
     
-    // Default to weekly if selector is missing
-    const periodEl = document.getElementById('report-period');
-    const reportPeriodType = periodEl ? periodEl.value : 'weekly';
+    const periodValue = document.getElementById('week-selector').value;
+    const periodType = document.getElementById('period-type').value;
+    const currentKey = `${periodType}-${periodValue}`;
+
+    // Filtrar apenas dados da semana/período ATUAL para evitar contagem dobrada
+    const { data: allTracking, error } = await _supabase
+        .from('acompanhamento')
+        .select('status')
+        .eq('periodo', currentKey);
     
-    const { data: allTracking, error } = await _supabase.from('acompanhamento').select('status');
-    
-    const stats = { sim: 0, nao: 0, parcial: 0 };
+    const stats = { sim: 0, nao: 0, parcial: 0, pendente: 0 };
     if (!error && allTracking) {
         allTracking.forEach(item => {
             if (item.status === 'Sim') stats.sim++;
             else if (item.status === 'Não fez') stats.nao++;
             else if (item.status === 'Parcialmente') stats.parcial++;
+            else stats.pendente++;
         });
     }
 
-    const total = stats.sim + stats.nao + stats.parcial;
-    
     if (mainChart) mainChart.destroy();
     mainChart = new Chart(ctxMain, {
         type: 'doughnut',
+        plugins: [ChartDataLabels],
         data: {
-            labels: ['Sim', 'Não fez', 'Parcialmente'],
+            labels: ['Sim', 'Não fez', 'Parcialmente', 'Pendente'],
             datasets: [{
-                data: total > 0 ? [stats.sim, stats.nao, stats.parcial] : [0, 0, 0],
-                backgroundColor: ['#10b981', '#ef4444', '#f59e0b'],
+                data: [stats.sim, stats.nao, stats.parcial, stats.pendente],
+                backgroundColor: ['#10b981', '#ef4444', '#f59e0b', '#334155'],
                 borderWidth: 0,
-                hoverOffset: 10
             }]
         },
         options: {
-            cutout: '70%',
+            cutout: '60%',
             plugins: { 
-                legend: { position: 'bottom', labels: { color: '#f8fafc', padding: 20 } }
+                legend: { position: 'bottom', labels: { color: '#f8fafc', padding: 20 } },
+                datalabels: {
+                    color: '#fff',
+                    font: { weight: 'bold', size: 14 },
+                    formatter: (value) => value > 0 ? value : '' // Só mostra se for > 0
+                }
             }
         }
     });

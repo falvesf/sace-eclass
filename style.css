@@ -25,40 +25,7 @@ body {
         radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.05) 0px, transparent 50%);
     color: var(--text-main);
     min-height: 100vh;
-    color-scheme: dark; /* Garante que ícones nativos como o do input week fiquem claros */
-}
-
-/* Opaque Login Overlay */
-#auth-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 10000;
-    background: var(--background);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.auth-card {
-    background: var(--card-bg);
-    backdrop-filter: blur(16px);
-    border: 1px solid var(--border);
-    padding: 3rem;
-    border-radius: 24px;
-    width: 100%;
-    max-width: 420px;
-    text-align: center;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-}
-
-.auth-card h1 {
-    font-size: 3rem;
-    font-weight: 800;
-    margin-bottom: 0.5rem;
-    letter-spacing: -2px;
-    background: linear-gradient(to bottom right, #fff, #6366f1);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color-scheme: dark;
 }
 
 /* Compact Container */
@@ -68,11 +35,22 @@ body {
     padding: 2rem 1.5rem;
 }
 
+/* Sticky Header Area */
+.sticky-controls {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--background);
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    margin-top: -1rem;
+}
+
 header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
     padding: 1rem 0;
 }
 
@@ -102,6 +80,23 @@ header {
 .nav-link:hover { color: white; background: rgba(255, 255, 255, 0.05); }
 .nav-link.active { background: var(--primary); color: white; }
 
+/* Filter Bar */
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 1.5rem;
+    background: rgba(255,255,255,0.03);
+    padding: 1rem;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+}
+
+.filter-bar input, .filter-bar select {
+    flex: 1;
+    min-width: 150px;
+}
+
 /* Cards */
 .card {
     background: var(--card-bg);
@@ -112,42 +107,64 @@ header {
     margin-bottom: 2rem;
 }
 
-h1 { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.02em; }
-.subtitle { color: var(--text-muted); margin-top: 0.3rem; }
+.table-card { padding: 0; overflow: visible; border-radius: 16px; }
 
-/* Tables - FULL ROW COLORING */
+/* Table Sticky Header */
 .data-table { width: 100%; border-collapse: collapse; }
-.data-table th {
+.data-table thead th {
+    position: sticky;
+    top: 120px; /* Alinhado com o sticky-controls */
+    background: #1e293b;
+    z-index: 90;
     text-align: left;
     padding: 1.2rem 1rem;
     color: var(--text-muted);
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 2px solid var(--border);
 }
-.data-table td { padding: 1.2rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.95rem; transition: 0.3s; }
 
-/* Linhas com cores de status (fundo suave para legibilidade) */
-tr.row-sim td { background-color: rgba(16, 185, 129, 0.15) !important; }
-tr.row-nao td { background-color: rgba(239, 68, 68, 0.15) !important; }
-tr.row-parcial td { background-color: rgba(245, 158, 11, 0.15) !important; }
+.data-table td { padding: 1.2rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
 
-/* Form Elements - HIGH CONTRAST */
+/* Sortable headers */
+th.sortable { cursor: pointer; transition: 0.2s; }
+th.sortable:hover { color: white; background: rgba(255,255,255,0.05); }
+th.sortable i { font-size: 0.7rem; margin-left: 5px; opacity: 0.5; }
+
+/* Status Row Colors */
+tr.row-sim td { background-color: rgba(16, 185, 129, 0.12) !important; }
+tr.row-nao td { background-color: rgba(239, 68, 68, 0.12) !important; }
+tr.row-parcial td { background-color: rgba(245, 158, 11, 0.12) !important; }
+
+/* Status Select Colors */
+.status-select {
+    font-weight: 600;
+    cursor: pointer;
+}
+.status-select option[value="Sim"] { color: var(--success); background: #0f172a; }
+.status-select option[value="Não fez"] { color: var(--danger); background: #0f172a; }
+.status-select option[value="Parcialmente"] { color: var(--warning); background: #0f172a; }
+
+/* Form Elements */
 input, select {
-    background: rgba(15, 23, 42, 0.8) !important; /* Fundo escuro fixo */
+    background: rgba(15, 23, 42, 0.8) !important;
     border: 1px solid var(--border);
-    color: #ffffff !important; /* Texto branco nítido */
+    color: #ffffff !important;
     padding: 0.7rem 1rem;
     border-radius: 10px;
-    transition: 0.2s;
+    font-size: 0.9rem;
 }
-input:focus { border-color: var(--primary); outline: none; background: rgba(0,0,0,0.3); }
 
-/* Ajuste específico para o ícone do calendário */
-input[type="week"]::-webkit-calendar-picker-indicator {
-    filter: invert(1);
+/* Week Selector Icon Contrast */
+input[type="week"] {
+    position: relative;
     cursor: pointer;
+}
+input[type="week"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(2); /* Muito mais brilho */
+    cursor: pointer;
+    transform: scale(1.2);
 }
 
 .btn {
@@ -164,30 +181,57 @@ input[type="week"]::-webkit-calendar-picker-indicator {
 .btn-primary { background: var(--primary); color: white; }
 .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
 
-.btn-exit { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); padding: 0.5rem; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; }
-
-/* Modals */
-#modal-container, #series-modal-container {
+/* Modal Improvements */
+#modal-container {
     position: fixed;
     inset: 0;
     z-index: 11000;
-    background: rgba(15, 23, 42, 0.8);
+    background: rgba(0,0,0,0.8);
     backdrop-filter: blur(8px);
     display: none;
     align-items: center;
     justify-content: center;
-    padding: 1.5rem;
 }
-.modal { width: 100%; max-width: 500px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+.modal { width: 100%; max-width: 550px; }
 
-/* Charts Area */
+.form-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 1.5rem;
+}
+.form-row label { min-width: 120px; font-weight: 600; font-size: 0.9rem; }
+.form-row select { flex: 1; }
+
+.scroll-box {
+    max-height: 200px;
+    overflow-y: auto;
+    background: rgba(0,0,0,0.2);
+    padding: 1rem;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+
+/* Charts */
 .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; }
+.chart-container { height: 300px; display: flex; align-items: center; justify-content: center; }
 
-/* Print Logic */
-.print-only { display: none !important; }
-@media print {
-    .print-only { display: block !important; }
-    body * { visibility: hidden; }
-    #print-area, #print-area * { visibility: visible; }
-    #print-area { position: absolute; inset: 0; background: white; color: black; padding: 2cm; }
+/* Auth Overlay */
+#auth-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: var(--background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.auth-card {
+    background: var(--card-bg);
+    padding: 3rem;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    border: 1px solid var(--border);
 }
