@@ -131,9 +131,9 @@ nav {
 }
 
 /* Row Status Colors */
-tr.row-sim { background: rgba(16, 185, 129, 0.1) !important; }
-tr.row-nao { background: rgba(239, 68, 68, 0.1) !important; }
-tr.row-parcial { background: rgba(245, 158, 11, 0.1) !important; }
+tr.row-sim { background: rgba(16, 185, 129, 0.15) !important; transition: var(--transition); }
+tr.row-nao { background: rgba(239, 68, 68, 0.15) !important; transition: var(--transition); }
+tr.row-parcial { background: rgba(245, 158, 11, 0.15) !important; transition: var(--transition); }
 
 .sortable {
     cursor: pointer;

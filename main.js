@@ -264,18 +264,20 @@ function toggleSort(key) {
         state.sortConfig.key = key;
         state.sortConfig.direction = 'asc';
     }
-    renderTrackingList();
+    renderTrackingList(false); // Don't re-fetch
 }
 
-async function renderTrackingList() {
+async function renderTrackingList(shouldFetch = true) {
     const periodValue = document.getElementById('week-selector').value;
     const periodType = document.getElementById('period-type').value;
     const filterProf = document.getElementById('filter-prof').value.toLowerCase();
     const filterSerie = document.getElementById('filter-serie').value.toLowerCase();
     const key = `${periodType}-${periodValue}`;
     
-    await fetchTeachers();
-    await fetchTracking(periodType, periodValue);
+    if (shouldFetch) {
+        await fetchTeachers();
+        await fetchTracking(periodType, periodValue);
+    }
 
     const list = document.getElementById('tracking-list');
     
@@ -315,7 +317,7 @@ async function renderTrackingList() {
         else if (row.status === 'Parcialmente') rowClass = 'row-parcial';
 
         return `
-            <tr class="${rowClass}">
+            <tr class="${rowClass}" id="row-${row.id}-${row.serie.replace(/\s+/g, '_')}">
                 <td>${row.nome}</td>
                 <td>${row.serie}</td>
                 <td>
@@ -357,9 +359,20 @@ async function updateTracking(teacherId, serie, status, observacao) {
     const key = `${periodType}-${periodValue}`;
     const cacheId = `${teacherId}_${serie}`;
     
-    // Get current values from cache if not provided
     const currentStatus = status !== null ? status : (state.tracking[key][cacheId]?.status || 'Pendente');
     const currentObs = observacao !== null ? observacao : (state.tracking[key][cacheId]?.observacao || '');
+
+    // Optimistic UI Update
+    if (status !== null) {
+        const rowId = `row-${teacherId}-${serie.replace(/\s+/g, '_')}`;
+        const row = document.getElementById(rowId);
+        if (row) {
+            row.classList.remove('row-sim', 'row-nao', 'row-parcial');
+            if (status === 'Sim') row.classList.add('row-sim');
+            else if (status === 'Não fez') row.classList.add('row-nao');
+            else if (status === 'Parcialmente') row.classList.add('row-parcial');
+        }
+    }
 
     const { error } = await _supabase
         .from('acompanhamento')
@@ -375,7 +388,8 @@ async function updateTracking(teacherId, serie, status, observacao) {
     if (error) console.error('Error updating tracking:', error);
     else {
         state.tracking[key][cacheId] = { status: currentStatus, observacao: currentObs };
-        if (status !== null) await renderTrackingList(); // Only re-render full list if status changed (to update colors/term button)
+        // If status changed, we need full render to update "Imprimir Termo" button visibility
+        if (status !== null) await renderTrackingList(false); 
     }
 }
 
@@ -529,6 +543,6 @@ async function initDashboard() {
 }
 
 // Bind events
-document.getElementById('period-type').addEventListener('change', renderTrackingList);
-document.getElementById('week-selector').addEventListener('change', renderTrackingList);
+document.getElementById('period-type').addEventListener('change', () => renderTrackingList());
+document.getElementById('week-selector').addEventListener('change', () => renderTrackingList());
 document.getElementById('report-period').addEventListener('change', renderReports);
