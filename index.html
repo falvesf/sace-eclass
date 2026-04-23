@@ -55,10 +55,11 @@
                 <h2 style="font-size: 1.2rem;">SACE <span style="color: var(--text-muted); font-weight: normal; font-size: 0.8rem;">E-Class Control</span></h2>
             </div>
             <div class="nav-links">
-                <a class="nav-link active" onclick="showSection('tracking')">Acompanhamento</a>
-                <a class="nav-link" onclick="showSection('teachers')">Professores</a>
-                <a class="nav-link" onclick="showSection('series')">Séries</a>
-                <a class="nav-link" onclick="showSection('reports')">Relatórios</a>
+                <a href="#" class="nav-link active" onclick="showSection('tracking')"><i class="fas fa-list-check"></i> Acompanhamento</a>
+                <a href="#" class="nav-link" onclick="showSection('teachers')"><i class="fas fa-users"></i> Professores</a>
+                <a href="#" class="nav-link" onclick="showSection('series')"><i class="fas fa-layer-group"></i> Séries</a>
+                <a href="#" class="nav-link" onclick="showSection('reports')"><i class="fas fa-chart-pie"></i> Relatórios</a>
+                <a href="#" class="nav-link" onclick="showSection('config')"><i class="fas fa-cog"></i> Configurações</a>
             </div>
             <div id="user-info" style="display: flex; align-items: center; gap: 1rem;">
                 <span id="user-role" class="glass-card" style="padding: 0.2rem 0.6rem; font-size: 0.7rem; border-color: var(--primary);">Coordenador</span>
@@ -191,6 +192,41 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Config Section -->
+            <section id="section-config" class="section" style="display: none;">
+                <div class="card">
+                    <h2 style="margin-bottom: 1.5rem;"><i class="fas fa-cog"></i> Configurações do Sistema</h2>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <!-- Localidade -->
+                        <div class="form-group">
+                            <label>Cidade - UF (Para o Termo)</label>
+                            <input type="text" id="config-cidade-uf" placeholder="Ex: São Paulo - SP">
+                            <small style="color: var(--text-muted);">Esta informação aparecerá antes da data no termo de ciência.</small>
+                        </div>
+
+                        <!-- Assinatura Digital -->
+                        <div class="form-group">
+                            <label>Assinatura Digital do Coordenador</label>
+                            <div style="border: 2px dashed var(--border-color); padding: 1.5rem; border-radius: 8px; text-align: center; background: rgba(255,255,255,0.02);">
+                                <div id="signature-preview-container" style="margin-bottom: 1rem; display: none;">
+                                    <img id="signature-preview" style="max-height: 80px; filter: grayscale(1) contrast(1.5);">
+                                </div>
+                                <input type="file" id="signature-upload" accept="image/*" style="display: none;" onchange="handleSignatureUpload(this)">
+                                <button class="btn btn-primary" onclick="document.getElementById('signature-upload').click()">
+                                    <i class="fas fa-upload"></i> Selecionar Imagem da Assinatura
+                                </button>
+                                <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">Use uma imagem com fundo transparente (PNG) para melhor resultado.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); text-align: right;">
+                        <button class="btn btn-primary" onclick="saveConfig()">Salvar Configurações</button>
+                    </div>
+                </div>
+            </section>
         </main>
 
         <!-- Modals -->
@@ -245,62 +281,47 @@
 
         <!-- Term to Print -->
         <div id="print-area" class="print-only" style="background: white; padding: 40px; min-height: 100vh;">
-            <div class="term-content" style="max-width: 800px; margin: 0 auto; color: black;">
-                <div class="term-header">
-                    TERMO DE CIÊNCIA E COMPROMISSO SEMANAL – LANÇAMENTO DE DADOS (E-CLASS)
-                </div>
+            <div class="print-header">
+                TERMO DE CIÊNCIA E COMPROMISSO SEMANAL – LANÇAMENTO DE DADOS (E-CLASS)
+            </div>
+            
+            <table class="print-info-table">
+                <tr><td class="label">Nome:</td><td id="print-prof-name"></td></tr>
+                <tr><td class="label">Série:</td><td id="print-prof-grades"></td></tr>
+                <tr><td class="label">Semana:</td><td id="print-week"></td></tr>
+            </table>
+
+            <div class="print-section">
+                <strong>1. Do Objeto e Frequência</strong><br>
+                Pelo presente termo, o docente acima identificado declara estar ciente da pendência relativa ao abastecimento semanal de informações acadêmicas no sistema <strong>E-Class</strong>.
+            </div>
+
+            <div class="print-section">
+                <strong>2. Das Pendências Identificadas</strong><br>
+                As informações referentes à semana supracitada que não foram localizadas incluem: Lançamento de conteúdos; Postagem de materiais e tarefas; Atualização de notas (se aplicável).
+            </div>
+
+            <div class="print-section">
+                <strong>3. Do Prazo e Responsabilidade</strong><br>
+                O docente compromete-se a regularizar a alimentação dos dados em até <strong>24 horas</strong>. A coordenação reitera que o preenchimento semanal é obrigatório para o fluxo de trabalho pedagógico.
+            </div>
+
+            <div class="print-footer" style="margin-top: 2rem;">
+                <p><span id="print-city-uf">Cidade - UF</span>, <span id="print-date"></span></p>
                 
-                <p><strong>Identificação do Docente:</strong></p>
-                <table class="term-table">
-                    <tr>
-                        <td style="background: #f9f9f9; width: 30%;"><strong>Nome:</strong></td>
-                        <td id="print-prof-name"></td>
-                    </tr>
-                    <tr>
-                        <td style="background: #f9f9f9;"><strong>Disciplina(s) / Séries:</strong></td>
-                        <td id="print-prof-grades"></td>
-                    </tr>
-                    <tr>
-                        <td style="background: #f9f9f9;"><strong>Semana de Referência:</strong></td>
-                        <td id="print-week"></td>
-                    </tr>
-                </table>
-
-                <div class="term-section-title">1. Do Objeto e Frequência</div>
-                <p>Pelo presente termo, o docente acima identificado declara estar ciente da pendência relativa ao abastecimento semanal de informações acadêmicas no sistema <strong>E-Class</strong>. Este documento constitui um registro de acompanhamento recorrente para garantir a atualização do sistema conforme as diretrizes institucionais.</p>
-
-                <div class="term-section-title">2. Das Pendências Identificadas</div>
-                <p>As informações referentes à semana supracitada que não foram localizadas no sistema incluem:</p>
-                <ul>
-                    <li>Lançamento de conteúdos ministrados;</li>
-                    <li>Postagem de materiais de apoio e tarefas;</li>
-                    <li>Atualização de notas de atividades semanais (se aplicável).</li>
-                </ul>
-
-                <div class="term-section-title">3. Do Prazo de Regularização</div>
-                <p>O docente compromete-se a regularizar a alimentação dos dados da referida semana no sistema <strong>impreterivelmente em até 24 horas</strong> após a assinatura deste termo, visando manter a transparência para alunos e responsáveis.</p>
-
-                <div class="term-section-title">4. Da Ciência e Responsabilidade</div>
-                <p>A coordenação reitera que o preenchimento semanal do E-Class é obrigatório e essencial para o fluxo de trabalho da secretaria e do acompanhamento pedagógico.</p>
-
-                <div style="margin-top: 3rem;">
-                    [Cidade - UF], <span id="print-date"></span>
-                </div>
-
-                <div class="signature-space">
-                    <div>
-                        <div class="signature-line" style="margin-top: 1rem;"></div>
-                        <p><strong id="print-prof-sign-name"></strong></p>
-                        <p>Docente</p>
-                    </div>
-                    <div>
-                        <div style="height: 60px; display: flex; align-items: flex-end; justify-content: center;">
-                            <!-- Espaço para assinatura digital da coordenação -->
-                            <span style="font-family: 'Dancing Script', cursive; font-size: 2rem; color: #1e3a8a; font-weight: normal; font-style: italic;" id="coord-signature-display">Assinatura Digital</span>
+                <div style="display: flex; justify-content: space-between; margin-top: 3rem; align-items: flex-end;">
+                    <div style="text-align: center; width: 45%;">
+                        <div style="border-top: 1px solid #000; padding-top: 5px;">
+                            <strong id="print-prof-sign-name">Nome do Professor</strong><br>Docente
                         </div>
-                        <div class="signature-line"></div>
-                        <p><strong id="print-coord-name">Coordenadora</strong></p>
-                        <p>Coordenação Acadêmica</p>
+                    </div>
+                    <div style="text-align: center; width: 45%;">
+                        <div id="print-coord-sig-container" style="margin-bottom: -10px; min-height: 50px;">
+                            <img id="print-coord-signature" style="max-height: 60px; display: none;">
+                        </div>
+                        <div style="border-top: 1px solid #000; padding-top: 5px;">
+                            <strong id="print-coord-name">Nome do Coordenador</strong><br>Coordenação
+                        </div>
                     </div>
                 </div>
             </div>

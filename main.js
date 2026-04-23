@@ -9,6 +9,10 @@ let state = {
     teachers: [],
     series: [], 
     tracking: {}, 
+    config: {
+        cidade_uf: 'Sua Cidade - UF',
+        assinatura_url: ''
+    },
     currentSection: 'tracking',
     editingTeacherId: null,
     sortConfig: { key: 'nome', direction: 'asc' }
@@ -100,6 +104,67 @@ async function showSection(id) {
     if (id === 'teachers') await renderTeacherList();
     if (id === 'series') await renderSeriesList();
     if (id === 'reports') await renderReports();
+    if (id === 'config') await loadConfig();
+}
+
+// --- Config Management ---
+async function loadConfig() {
+    const { data, error } = await _supabase.from('configuracoes').select('*');
+    if (!error && data) {
+        data.forEach(item => {
+            state.config[item.chave] = item.valor;
+        });
+    }
+    
+    document.getElementById('config-cidade-uf').value = state.config.cidade_uf || '';
+    if (state.config.assinatura_url) {
+        document.getElementById('signature-preview').src = state.config.assinatura_url;
+        document.getElementById('signature-preview-container').style.display = 'block';
+    }
+}
+
+async function handleSignatureUpload(input) {
+    if (!input.files || !input.files[0]) return;
+    
+    const file = input.files[0];
+    const fileExt = file.name.split('.').pop();
+    const fileName = `sig_${Date.now()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    // Upload to Supabase Storage (Bucket: assinaturas)
+    const { error: uploadError } = await _supabase.storage
+        .from('assinaturas')
+        .upload(filePath, file);
+
+    if (uploadError) {
+        alert('Erro ao subir imagem: ' + uploadError.message);
+        return;
+    }
+
+    // Get Public URL
+    const { data: { publicUrl } } = _supabase.storage
+        .from('assinaturas')
+        .getPublicUrl(filePath);
+
+    state.config.assinatura_url = publicUrl;
+    document.getElementById('signature-preview').src = publicUrl;
+    document.getElementById('signature-preview-container').style.display = 'block';
+}
+
+async function saveConfig() {
+    const cidade_uf = document.getElementById('config-cidade-uf').value;
+    
+    const updates = [
+        { chave: 'cidade_uf', valor: cidade_uf },
+        { chave: 'assinatura_url', valor: state.config.assinatura_url }
+    ];
+
+    const { error } = await _supabase
+        .from('configuracoes')
+        .upsert(updates);
+
+    if (error) alert('Erro ao salvar configurações: ' + error.message);
+    else alert('Configurações salvas com sucesso!');
 }
 
 // --- Teacher Management ---
@@ -368,7 +433,6 @@ async function updateTracking(teacherId, serie, status, observacao) {
     const currentStatus = status !== null ? status : (state.tracking[key][cacheId]?.status || 'Pendente');
     const currentObs = observacao !== null ? observacao : (state.tracking[key][cacheId]?.observacao || '');
 
-    // Optimistic UI Update
     const safeSerie = serie.replace(/\s+/g, '_').replace(/[^\w]/g, '');
     const row = document.getElementById(`row-${teacherId}-${safeSerie}`);
     if (row && status !== null) {
@@ -378,9 +442,7 @@ async function updateTracking(teacherId, serie, status, observacao) {
         else if (status === 'Parcialmente') row.classList.add('row-parcial');
     }
 
-    console.log('Tentando salvar:', { teacherId, serie, key, currentStatus, currentObs });
-
-    const { data, error } = await _supabase
+    const { error } = await _supabase
         .from('acompanhamento')
         .upsert({ 
             professor_id: teacherId, 
@@ -393,29 +455,44 @@ async function updateTracking(teacherId, serie, status, observacao) {
 
     if (error) {
         console.error('ERRO SUPABASE:', error);
-        alert('ERRO AO SALVAR!\n\n' + error.message + '\n\nVerifique se você rodou o comando de UNIQUE no SQL Editor.');
-        // Revert UI if error
+        alert('ERRO AO SALVAR!\n\n' + error.message);
         await renderTrackingList(true);
     } else {
-        console.log('Salvo com sucesso!');
         state.tracking[key][cacheId] = { status: currentStatus, observacao: currentObs };
         if (status !== null) await renderTrackingList(false); 
     }
 }
 
 // --- Printing ---
-function printTerm(teacherId, serie) {
+async function printTerm(teacherId, serie) {
     const teacher = state.teachers.find(t => t.id === teacherId);
     const periodValue = document.getElementById('week-selector').value;
     
+    // Load config before printing
+    await loadConfig();
+
     document.getElementById('print-prof-name').textContent = teacher.nome;
     document.getElementById('print-prof-grades').textContent = serie; 
     document.getElementById('print-week').textContent = periodValue;
     document.getElementById('print-date').textContent = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
     document.getElementById('print-prof-sign-name').textContent = teacher.nome;
     document.getElementById('print-coord-name').textContent = state.user.name;
+    document.getElementById('print-city-uf').textContent = state.config.cidade_uf;
+
+    const sigImg = document.getElementById('print-coord-signature');
+    if (state.config.assinatura_url) {
+        sigImg.src = state.config.assinatura_url;
+        sigImg.style.display = 'block';
+    } else {
+        sigImg.style.display = 'none';
+    }
     
-    window.print();
+    // Wait for image to load if visible
+    if (sigImg.style.display === 'block') {
+        sigImg.onload = () => window.print();
+    } else {
+        window.print();
+    }
 }
 
 // --- Reports ---
@@ -550,6 +627,7 @@ async function deleteSeries(id) {
 async function initDashboard() {
     await fetchSeries();
     await renderTrackingList();
+    await loadConfig(); // Prefetch config
 }
 
 // Bind events
