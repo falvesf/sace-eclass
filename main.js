@@ -244,17 +244,19 @@ async function fetchTracking(periodType, periodValue) {
         .select('*')
         .eq('periodo', key);
     
-    if (error) console.error('Error fetching tracking:', error);
-    else {
-        state.tracking[key] = {};
-        data.forEach(item => {
-            const cacheId = `${item.professor_id}_${item.serie}`;
-            state.tracking[key][cacheId] = {
-                status: item.status,
-                observacao: item.observacao || ''
-            };
-        });
+    if (error) {
+        console.error('Error fetching tracking:', error);
+        return;
     }
+
+    state.tracking[key] = {};
+    data.forEach(item => {
+        const cacheId = `${item.professor_id}_${item.serie}`;
+        state.tracking[key][cacheId] = {
+            status: item.status,
+            observacao: item.observacao || ''
+        };
+    });
 }
 
 function toggleSort(key) {
@@ -264,7 +266,7 @@ function toggleSort(key) {
         state.sortConfig.key = key;
         state.sortConfig.direction = 'asc';
     }
-    renderTrackingList(false); // Don't re-fetch
+    renderTrackingList(false);
 }
 
 async function renderTrackingList(shouldFetch = true) {
@@ -279,9 +281,11 @@ async function renderTrackingList(shouldFetch = true) {
         await fetchTracking(periodType, periodValue);
     }
 
+    if (!state.tracking[key]) state.tracking[key] = {};
+
     const list = document.getElementById('tracking-list');
-    
     let rowsData = [];
+    
     state.teachers.forEach(t => {
         if (!t.series) return;
         t.series.forEach(serie => {
@@ -301,7 +305,6 @@ async function renderTrackingList(shouldFetch = true) {
         });
     });
 
-    // Apply Sorting
     rowsData.sort((a, b) => {
         let valA = a[state.sortConfig.key].toLowerCase();
         let valB = b[state.sortConfig.key].toLowerCase();
@@ -316,8 +319,9 @@ async function renderTrackingList(shouldFetch = true) {
         else if (row.status === 'Não fez') rowClass = 'row-nao';
         else if (row.status === 'Parcialmente') rowClass = 'row-parcial';
 
+        const safeSerie = row.serie.replace(/\s+/g, '_').replace(/[^\w]/g, '');
         return `
-            <tr class="${rowClass}" id="row-${row.id}-${row.serie.replace(/\s+/g, '_')}">
+            <tr class="${rowClass}" id="row-${row.id}-${safeSerie}">
                 <td>${row.nome}</td>
                 <td>${row.serie}</td>
                 <td>
@@ -359,13 +363,15 @@ async function updateTracking(teacherId, serie, status, observacao) {
     const key = `${periodType}-${periodValue}`;
     const cacheId = `${teacherId}_${serie}`;
     
+    if (!state.tracking[key]) state.tracking[key] = {};
+    
     const currentStatus = status !== null ? status : (state.tracking[key][cacheId]?.status || 'Pendente');
     const currentObs = observacao !== null ? observacao : (state.tracking[key][cacheId]?.observacao || '');
 
-    // Optimistic UI Update
+    // Optimistic UI Update for color
     if (status !== null) {
-        const rowId = `row-${teacherId}-${serie.replace(/\s+/g, '_')}`;
-        const row = document.getElementById(rowId);
+        const safeSerie = serie.replace(/\s+/g, '_').replace(/[^\w]/g, '');
+        const row = document.getElementById(`row-${teacherId}-${safeSerie}`);
         if (row) {
             row.classList.remove('row-sim', 'row-nao', 'row-parcial');
             if (status === 'Sim') row.classList.add('row-sim');
@@ -385,10 +391,13 @@ async function updateTracking(teacherId, serie, status, observacao) {
             atualizado_por: state.user.name
         }, { onConflict: 'professor_id, periodo, serie' });
 
-    if (error) console.error('Error updating tracking:', error);
-    else {
+    if (error) {
+        console.error('Error updating tracking:', error);
+        alert('ERRO AO SALVAR: Verifique se você adicionou a coluna "observacao" no Supabase.\n\nDetalhes: ' + error.message);
+        // Re-render to revert to last saved state
+        await renderTrackingList(true);
+    } else {
         state.tracking[key][cacheId] = { status: currentStatus, observacao: currentObs };
-        // If status changed, we need full render to update "Imprimir Termo" button visibility
         if (status !== null) await renderTrackingList(false); 
     }
 }
