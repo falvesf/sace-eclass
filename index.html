@@ -120,6 +120,7 @@
                             <option value="monthly">Mensal</option>
                         </select>
                         <input type="week" id="week-selector">
+                        <span id="academic-week-label" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); display: none; align-self: center; margin-left: 10px; background: rgba(99,102,241,0.1); padding: 4px 10px; border-radius: 12px; border: 1px solid rgba(99,102,241,0.2);"></span>
                     </div>
                 </div>
                 <div class="card table-card">
@@ -214,7 +215,35 @@
                 <div class="card">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
                         <h2 style="margin: 0;">Configurações</h2>
-                        <span style="font-size: 0.78rem; color: var(--text-muted); background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.25); padding: 4px 12px; border-radius: 20px;">
+                    </div>
+
+                    <!-- Configurações Globais -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <span style="font-size: 0.78rem; color: var(--text-muted); background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center;">
+                            <i class="fas fa-globe" style="margin-right: 5px;"></i> Configurações do Calendário — afetam todos os usuários
+                        </span>
+                    </div>
+                    <div class="config-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border);">
+                        <!-- Início do Ano Letivo -->
+                        <div class="form-group">
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px;">
+                                <i class="fas fa-calendar-plus" style="margin-right: 5px;"></i> Início do Ano Letivo
+                            </label>
+                            <input type="date" id="config-ano-inicio">
+                        </div>
+
+                        <!-- Fim do Ano Letivo -->
+                        <div class="form-group">
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px;">
+                                <i class="fas fa-calendar-check" style="margin-right: 5px;"></i> Final do Ano Letivo
+                            </label>
+                            <input type="date" id="config-ano-fim">
+                        </div>
+                    </div>
+
+                    <!-- Configurações Pessoais -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <span style="font-size: 0.78rem; color: var(--text-muted); background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.25); padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center;">
                             <i class="fas fa-user" style="margin-right: 5px;"></i> Configurações pessoais — salvas por usuário
                         </span>
                     </div>

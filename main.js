@@ -75,6 +75,35 @@ function getWeekNumber(d) {
     return weekNo;
 }
 
+function getAcademicWeek(isoWeekString) {
+    if (!state.config.ano_inicio) return null;
+    
+    const match = isoWeekString.match(/^(\d{4})-W(\d+)$/);
+    if (!match) return null;
+    
+    const currentYear = parseInt(match[1]);
+    const currentIsoWeek = parseInt(match[2]);
+    
+    const parts = state.config.ano_inicio.split('-');
+    if (parts.length !== 3) return null;
+    
+    const startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    const startIsoWeek = getWeekNumber(startDate);
+    const startYear = startDate.getFullYear();
+
+    if (currentYear === startYear) {
+        return currentIsoWeek - startIsoWeek + 1;
+    } else if (currentYear > startYear) {
+        const dec31 = new Date(startYear, 11, 31);
+        let weeksInStartYear = getWeekNumber(dec31);
+        if (weeksInStartYear === 1) { 
+            weeksInStartYear = getWeekNumber(new Date(startYear, 11, 24));
+        }
+        return (weeksInStartYear - startIsoWeek + 1) + currentIsoWeek;
+    }
+    return null;
+}
+
 // --- Period Selector Dinâmico ---
 function updatePeriodSelector() {
     const type = document.getElementById('period-type').value;
@@ -212,7 +241,7 @@ async function loadConfig() {
     const { data, error } = await _supabase
         .from('configuracoes')
         .select('*')
-        .eq('usuario', usuario);
+        .in('usuario', [usuario, 'global']);
 
     if (!error && data) {
         data.forEach(item => {
@@ -223,8 +252,12 @@ async function loadConfig() {
     const cidadeEl = document.getElementById('config-cidade-uf');
     const previewContainer = document.getElementById('signature-preview-container');
     const previewImg = document.getElementById('signature-preview');
+    const inicioEl = document.getElementById('config-ano-inicio');
+    const fimEl = document.getElementById('config-ano-fim');
 
     if (cidadeEl) cidadeEl.value = state.config.cidade_uf || '';
+    if (inicioEl) inicioEl.value = state.config.ano_inicio || '';
+    if (fimEl) fimEl.value = state.config.ano_fim || '';
 
     if (state.config.assinatura_url && previewImg && previewContainer) {
         previewImg.src = state.config.assinatura_url;
@@ -285,18 +318,26 @@ async function saveConfig(silent = false) {
     if (!state.user) return;
     const usuario = state.user.name;
     const cidade_uf = document.getElementById('config-cidade-uf').value;
+    const ano_inicio = document.getElementById('config-ano-inicio')?.value;
+    const ano_fim = document.getElementById('config-ano-fim')?.value;
 
     const updates = [
         { chave: 'cidade_uf', valor: cidade_uf, usuario },
         { chave: 'assinatura_url', valor: state.config.assinatura_url || '', usuario }
     ];
 
+    if (ano_inicio !== undefined) updates.push({ chave: 'ano_inicio', valor: ano_inicio, usuario: 'global' });
+    if (ano_fim !== undefined) updates.push({ chave: 'ano_fim', valor: ano_fim, usuario: 'global' });
+
     const { error } = await _supabase
         .from('configuracoes')
         .upsert(updates, { onConflict: 'chave, usuario' });
 
     if (error) alert('Erro ao salvar configurações: ' + error.message);
-    else if (!silent) alert('Configurações salvas com sucesso!');
+    else {
+        if (!silent) alert('Configurações salvas com sucesso!');
+        await renderTrackingList(false); // Atualiza os labels visuais da tela de acompanhamento
+    }
 }
 
 // --- Teacher Management ---
@@ -513,6 +554,22 @@ async function renderTrackingList(shouldFetch = true) {
     const filterSerie = document.getElementById('filter-serie').value.toLowerCase();
     const key = `${periodType}-${periodValue}`;
     
+    // Set academic week label if weekly
+    const labelEl = document.getElementById('academic-week-label');
+    if (labelEl) {
+        if (periodType === 'weekly' && periodValue) {
+            const aw = getAcademicWeek(periodValue);
+            if (aw !== null && aw > 0) {
+                labelEl.textContent = `Semana Letiva: ${aw}`;
+                labelEl.style.display = 'inline-block';
+            } else {
+                labelEl.style.display = 'none';
+            }
+        } else {
+            labelEl.style.display = 'none';
+        }
+    }
+
     if (shouldFetch) {
         await fetchTeachers();
         await fetchTracking(periodType, periodValue);
@@ -660,7 +717,14 @@ async function printTerm(teacherId, serie) {
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(startOfWeek.getDate() + 4);
         const opts = { day: '2-digit', month: '2-digit', year: 'numeric' };
-        periodoFormatado = `Semana ${semana}/${ano} — ${startOfWeek.toLocaleDateString('pt-BR', opts)} a ${endOfWeek.toLocaleDateString('pt-BR', opts)}`;
+        
+        let labelSemana = `Semana ${semana}`;
+        const aw = getAcademicWeek(periodValue);
+        if (aw !== null && aw > 0) {
+            labelSemana = `Semana Letiva ${aw}`;
+        }
+        
+        periodoFormatado = `${labelSemana}/${ano} — ${startOfWeek.toLocaleDateString('pt-BR', opts)} a ${endOfWeek.toLocaleDateString('pt-BR', opts)}`;
     }
 
     // Fill print fields
