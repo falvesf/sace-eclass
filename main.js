@@ -898,24 +898,39 @@ async function renderReports() {
     const listHtml = { 'Sim': [], 'Não fez': [], 'Parcialmente': [], 'Pendente': [] };
 
     if (!listError && listTracking) {
-        // Ordenar por período de forma decrescente para mostrar os mais recentes primeiro
         listTracking.sort((a, b) => b.periodo.localeCompare(a.periodo));
         
+        const grouped = { 'Sim': {}, 'Não fez': {}, 'Parcialmente': {}, 'Pendente': {} };
+
         listTracking.forEach(item => {
             const prof = teacherMap[item.professor_id];
             const sistemas = prof ? (prof.sistemas || ['eclass']) : [];
             if (!prof || !sistemas.includes(state.activeSystem)) return;
 
-            const html = `
-                <div style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                    <div style="font-weight: 600; font-size: 0.9rem;">${prof.nome}</div>
-                    <div style="color: var(--text-muted); font-size: 0.75rem;">${item.serie} | ${item.periodo.replace(reportPeriodType+'-', '')}</div>
-                </div>
-            `;
-            if (item.status === 'Sim') listHtml['Sim'].push(html);
-            else if (item.status === 'Não fez') listHtml['Não fez'].push(html);
-            else if (item.status === 'Parcialmente') listHtml['Parcialmente'].push(html);
-            else listHtml['Pendente'].push(html);
+            const statusGroup = grouped[item.status] || grouped['Pendente'];
+            if (!statusGroup[prof.id]) {
+                statusGroup[prof.id] = { nome: prof.nome, count: 0, details: [] };
+            }
+            statusGroup[prof.id].count++;
+            statusGroup[prof.id].details.push(`${item.serie} | ${item.periodo.replace(reportPeriodType+'-', '')}`);
+        });
+
+        Object.keys(grouped).forEach(status => {
+            const profs = Object.values(grouped[status]);
+            profs.sort((a, b) => a.nome.localeCompare(b.nome));
+            
+            profs.forEach(p => {
+                const badge = p.count > 1 ? `<span style="background: rgba(255,255,255,0.1); color: var(--text-main); padding: 2px 6px; border-radius: 12px; font-size: 0.75rem; margin-left: 8px;">${p.count}</span>` : '';
+                const detailsHtml = p.details.map(d => `<div>${d}</div>`).join('');
+                
+                const html = `
+                    <div style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <div style="font-weight: 600; font-size: 0.9rem; display: flex; align-items: center;">${p.nome} ${badge}</div>
+                        <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px;">${detailsHtml}</div>
+                    </div>
+                `;
+                listHtml[status].push(html);
+            });
         });
     }
 
