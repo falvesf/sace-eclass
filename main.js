@@ -1129,7 +1129,7 @@ window.addEventListener('beforeprint', () => {
         if (typeof mainChart !== 'undefined' && mainChart) {
             mainChart.options.plugins.legend.labels.color = '#000000';
             if (mainChart.options.plugins.datalabels) {
-                mainChart.options.plugins.datalabels.color = '#000000';
+                mainChart.options.plugins.datalabels.color = '#ffffff';
             }
             mainChart.update('none');
         }
