@@ -98,8 +98,17 @@
                     <div class="section-header">
                         <div>
                             <h1 id="tracking-section-title">Acompanhamento Semanal</h1>
-                            <p class="subtitle">Controle de preenchimento do sistema E-Class</p>
+                            <p class="subtitle" id="tracking-subtitle">Controle de preenchimento do sistema E-Class</p>
                         </div>
+                    </div>
+                    <!-- Seletor de Sistema -->
+                    <div class="system-switcher">
+                        <button id="btn-sys-eclass" class="sys-btn active" onclick="switchSystem('eclass')">
+                            <i class="fas fa-laptop"></i> E-Class
+                        </button>
+                        <button id="btn-sys-seq_didatica" class="sys-btn" onclick="switchSystem('seq_didatica')">
+                            <i class="fas fa-book-open"></i> Seq. Didática
+                        </button>
                     </div>
                     <div class="filter-bar">
                         <input type="text" id="filter-prof" placeholder="Buscar Professor..." oninput="renderTrackingList(false)">
@@ -143,6 +152,7 @@
                                 <th>Nome</th>
                                 <th>Tipo</th>
                                 <th>Séries</th>
+                                <th>Sistemas</th>
                                 <th style="text-align: right;">Ações</th>
                             </tr>
                         </thead>
@@ -267,7 +277,7 @@
             <div class="termo-header">
                 <p class="termo-escola" id="print-escola-nome">ESCOLA ADVENTISTA</p>
                 <h1 class="termo-titulo">TERMO DE CIÊNCIA</h1>
-                <p class="termo-subtitulo">Sistema E-Class — Controle de Preenchimento Semanal</p>
+                <p class="termo-subtitulo">Sistema <span id="print-system-name">E-Class</span> — Controle de Preenchimento Semanal</p>
             </div>
 
             <div class="termo-linha-divisor"></div>

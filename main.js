@@ -15,8 +15,34 @@ let state = {
     },
     currentSection: 'tracking',
     editingTeacherId: null,
-    sortConfig: { key: 'nome', direction: 'asc' }
+    sortConfig: { key: 'nome', direction: 'asc' },
+    activeSystem: 'eclass' // 'eclass' | 'seq_didatica'
 };
+
+// --- System Routing ---
+function getActiveTable() {
+    return state.activeSystem === 'eclass' ? 'acompanhamento' : 'acompanhamento_seq_didatica';
+}
+
+function getActiveSystemLabel() {
+    return state.activeSystem === 'eclass' ? 'E-Class' : 'Sequência Didática';
+}
+
+async function switchSystem(system) {
+    state.activeSystem = system;
+    state.tracking = {}; // Limpa cache ao trocar
+
+    // Atualiza botões do switcher
+    document.querySelectorAll('.sys-btn').forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById(`btn-sys-${system}`);
+    if (btn) btn.classList.add('active');
+
+    // Atualiza subtítulo
+    const sub = document.getElementById('tracking-subtitle');
+    if (sub) sub.textContent = `Controle de preenchimento do sistema ${getActiveSystemLabel()}`;
+
+    await renderTrackingList(true);
+}
 
 const periods = {
     DAILY: 'daily',
@@ -347,19 +373,60 @@ async function renderTeacherList() {
     await fetchTeachers();
     await fetchSeries(); 
     const list = document.getElementById('teacher-list');
-    list.innerHTML = state.teachers.map(t => `
+    list.innerHTML = state.teachers.map(t => {
+        const sistemas = t.sistemas || ['eclass'];
+        const hasEclass = sistemas.includes('eclass');
+        const hasSeq = sistemas.includes('seq_didatica');
+        return `
         <tr>
             <td>${t.nome}</td>
             <td style="text-transform: capitalize;">${t.tipo}</td>
             <td>${t.series ? t.series.join(', ') : '-'}</td>
             <td>
-                <div style="display: flex; gap: 0.5rem;">
-                    <button class="btn" style="padding: 0.2rem 0.5rem; background: rgba(99, 102, 241, 0.1); color: #818cf8;" onclick="openTeacherModal('${t.id}')">Editar</button>
-                    <button class="btn" style="padding: 0.2rem 0.5rem; background: rgba(239, 68, 68, 0.1); color: var(--danger);" onclick="deleteTeacher('${t.id}')">Excluir</button>
+                <div class="teacher-actions">
+                    <div class="system-check-group">
+                        <label class="sys-check-label" title="E-Class">
+                            <input type="checkbox" ${hasEclass ? 'checked' : ''} onchange="toggleTeacherSystem('${t.id}', 'eclass', this.checked)">
+                            <span class="sys-check-pill eclass-pill">E-Class</span>
+                        </label>
+                        <label class="sys-check-label" title="Sequência Didática">
+                            <input type="checkbox" ${hasSeq ? 'checked' : ''} onchange="toggleTeacherSystem('${t.id}', 'seq_didatica', this.checked)">
+                            <span class="sys-check-pill seq-pill">Seq. Did.</span>
+                        </label>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn" style="padding: 0.2rem 0.5rem; background: rgba(99, 102, 241, 0.1); color: #818cf8;" onclick="openTeacherModal('${t.id}')">Editar</button>
+                        <button class="btn" style="padding: 0.2rem 0.5rem; background: rgba(239, 68, 68, 0.1); color: var(--danger);" onclick="deleteTeacher('${t.id}')">Excluir</button>
+                    </div>
                 </div>
             </td>
         </tr>
-    `).join('');
+        `;
+    }).join('');
+}
+
+async function toggleTeacherSystem(teacherId, system, active) {
+    const teacher = state.teachers.find(t => t.id === teacherId);
+    if (!teacher) return;
+
+    let sistemas = [...(teacher.sistemas || ['eclass'])];
+    if (active) {
+        if (!sistemas.includes(system)) sistemas.push(system);
+    } else {
+        sistemas = sistemas.filter(s => s !== system);
+    }
+
+    const { error } = await _supabase
+        .from('professores')
+        .update({ sistemas })
+        .eq('id', teacherId);
+
+    if (error) {
+        alert('Erro ao atualizar sistema do professor: ' + error.message);
+        await renderTeacherList(); // reverte na UI
+    } else {
+        teacher.sistemas = sistemas; // Atualiza cache local
+    }
 }
 
 async function deleteTeacher(id) {
@@ -373,7 +440,7 @@ async function deleteTeacher(id) {
 async function fetchTracking(periodType, periodValue) {
     const key = `${periodType}-${periodValue}`;
     const { data, error } = await _supabase
-        .from('acompanhamento')
+        .from(getActiveTable())
         .select('*')
         .eq('periodo', key);
     
@@ -423,6 +490,10 @@ async function renderTrackingList(shouldFetch = true) {
     
     state.teachers.forEach(t => {
         if (!t.series) return;
+        // Filtra apenas professores vinculados ao sistema ativo
+        const sistemas = t.sistemas || ['eclass'];
+        if (!sistemas.includes(state.activeSystem)) return;
+
         t.series.forEach(serie => {
             if (filterProf && !t.nome.toLowerCase().includes(filterProf)) return;
             if (filterSerie && !serie.toLowerCase().includes(filterSerie)) return;
@@ -513,7 +584,7 @@ async function updateTracking(teacherId, serie, status, observacao) {
     }
 
     const { error } = await _supabase
-        .from('acompanhamento')
+        .from(getActiveTable())
         .upsert({ 
             professor_id: teacherId, 
             serie: serie,
@@ -565,6 +636,9 @@ async function printTerm(teacherId, serie) {
     document.getElementById('print-prof-sign-name').textContent = teacher.nome;
     document.getElementById('print-coord-name').textContent = state.user.name;
     document.getElementById('print-city-uf').textContent = state.config.cidade_uf;
+    // Injeta nome do sistema no termo
+    const sysNameEl = document.getElementById('print-system-name');
+    if (sysNameEl) sysNameEl.textContent = getActiveSystemLabel();
 
     // Handle coordinator signature image
     const sigImg = document.getElementById('print-coord-signature');
@@ -602,16 +676,17 @@ async function renderReports() {
     const periodType = document.getElementById('period-type').value;
     const currentKey = `${periodType}-${periodValue}`;
 
-    // 1. Buscar registros existentes
+    // 1. Buscar registros existentes do sistema ativo
     const { data: allTracking, error } = await _supabase
-        .from('acompanhamento')
+        .from(getActiveTable())
         .select('status')
         .eq('periodo', currentKey);
     
-    // 2. Calcular total esperado de registros
+    // 2. Calcular total esperado: apenas professores do sistema ativo
     let totalExpected = 0;
     state.teachers.forEach(t => {
-        if (t.series) totalExpected += t.series.length;
+        const sistemas = t.sistemas || ['eclass'];
+        if (t.series && sistemas.includes(state.activeSystem)) totalExpected += t.series.length;
     });
 
     const stats = { sim: 0, nao: 0, parcial: 0, pendente: 0 };
