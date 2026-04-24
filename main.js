@@ -8,6 +8,7 @@ let state = {
     user: null,
     teachers: [],
     series: [], 
+    segmentos: [],
     tracking: {}, 
     config: {
         cidade_uf: 'Sua Cidade - UF',
@@ -15,6 +16,7 @@ let state = {
     },
     currentSection: 'tracking',
     editingTeacherId: null,
+    editingSeriesId: null,
     sortConfig: { key: 'nome', direction: 'asc' },
     activeSystem: 'eclass' // 'eclass' | 'seq_didatica'
 };
@@ -411,21 +413,45 @@ async function openTeacherModal(id = null) {
     document.getElementById('modal-container').style.display = 'flex';
 }
 
-function renderSeriesPicker(selectedSeries = []) {
+async function renderSeriesPicker(selectedSeries = []) {
     const picker = document.getElementById('series-picker');
+    await fetchSegmentos();
+    await fetchSeries();
+
     if (!state.series || state.series.length === 0) {
         picker.innerHTML = '<p style="color: var(--text-muted); font-size: 0.8rem; text-align: center;">Cadastre séries na aba "Séries" primeiro.</p>';
         return;
     }
-    picker.innerHTML = state.series.map(s => {
-        const isChecked = selectedSeries.includes(s.nome) ? 'checked' : '';
-        return `
-            <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer;">
-                <input type="checkbox" name="prof-series" value="${s.nome}" style="width: auto;" ${isChecked}>
-                <span>${s.nome}</span>
-            </label>
-        `;
-    }).join('');
+
+    // Agrupar séries por segmento para o picker
+    const grouped = {};
+    state.segmentos.forEach(s => grouped[s.id] = { nome: s.nome, items: [] });
+    grouped['none'] = { nome: 'Sem Categoria', items: [] };
+
+    state.series.forEach(s => {
+        const segId = s.segmento_id || 'none';
+        if (!grouped[segId]) grouped[segId] = { nome: 'Outros', items: [] };
+        grouped[segId].items.push(s);
+    });
+
+    let html = '';
+    Object.keys(grouped).forEach(segId => {
+        const group = grouped[segId];
+        if (group.items.length === 0) return;
+
+        html += `<div class="picker-group-title">${group.nome}</div>`;
+        group.items.forEach(s => {
+            const isChecked = selectedSeries.includes(s.nome) ? 'checked' : '';
+            html += `
+                <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" name="prof-series" value="${s.nome}" style="width: auto;" ${isChecked}>
+                    <span>${s.nome}</span>
+                </label>
+            `;
+        });
+    });
+
+    picker.innerHTML = html;
 }
 
 function closeModal() {
@@ -1172,6 +1198,49 @@ function getTrendLabels(type) {
     }
 }
 
+// --- Segmentos Management ---
+async function fetchSegmentos() {
+    const { data, error } = await _supabase.from('segmentos').select('*').order('ordem', { ascending: true });
+    if (error) console.error('Error fetching segmentos:', error);
+    else state.segmentos = data;
+}
+
+async function saveSegment() {
+    const nome = document.getElementById('new-segment-name').value.trim();
+    if (!nome) return;
+
+    const { error } = await _supabase.from('segmentos').insert([{ nome, ordem: state.segmentos.length + 1 }]);
+    if (error) alert('Erro ao salvar turma: ' + error.message);
+    else {
+        document.getElementById('new-segment-name').value = '';
+        await renderSegmentList();
+        await fetchSegmentos();
+    }
+}
+
+async function deleteSegment(id) {
+    if (!confirm('Excluir esta turma? Séries vinculadas ficarão sem categoria.')) return;
+    const { error } = await _supabase.from('segmentos').delete().eq('id', id);
+    if (error) alert('Erro ao excluir: ' + error.message);
+    else {
+        await renderSegmentList();
+        await fetchSegmentos();
+    }
+}
+
+async function renderSegmentList() {
+    await fetchSegmentos();
+    const list = document.getElementById('segment-list');
+    list.innerHTML = state.segmentos.map(s => `
+        <tr>
+            <td>${s.nome}</td>
+            <td style="text-align: right;">
+                <button class="btn" style="padding: 0.2rem 0.5rem; background: rgba(239, 68, 68, 0.1); color: var(--danger);" onclick="deleteSegment('${s.id}')">Excluir</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
 // --- Series Management ---
 async function fetchSeries() {
     const { data, error } = await _supabase.from('series').select('*').order('nome', { ascending: true });
@@ -1179,7 +1248,27 @@ async function fetchSeries() {
     else state.series = data;
 }
 
-function openSeriesModal() {
+async function openSeriesModal(id = null) {
+    state.editingSeriesId = id;
+    await fetchSegmentos();
+    const select = document.getElementById('series-segment');
+    select.innerHTML = '<option value="">Sem Turma/Segmento</option>' + 
+        state.segmentos.map(s => `<option value="${s.id}">${s.nome}</option>`).join('');
+    
+    const title = document.getElementById('series-modal-title');
+    const nameInput = document.getElementById('series-name');
+
+    if (id) {
+        const serie = state.series.find(s => s.id === id);
+        title.textContent = 'Editar Série';
+        nameInput.value = serie.nome;
+        select.value = serie.segmento_id || '';
+    } else {
+        title.textContent = 'Nova Série';
+        nameInput.value = '';
+        select.value = '';
+    }
+
     const modal = document.getElementById('series-modal-container');
     if (modal) modal.style.display = 'flex';
 }
@@ -1187,14 +1276,24 @@ function openSeriesModal() {
 function closeSeriesModal() {
     const modal = document.getElementById('series-modal-container');
     if (modal) modal.style.display = 'none';
+    state.editingSeriesId = null;
     document.getElementById('series-name').value = '';
 }
 
 async function saveSeries() {
     const nome = document.getElementById('series-name').value.trim();
+    const segmento_id = document.getElementById('series-segment').value || null;
     if (!nome) return;
 
-    const { error } = await _supabase.from('series').insert([{ nome }]);
+    let error;
+    if (state.editingSeriesId) {
+        const res = await _supabase.from('series').update({ nome, segmento_id }).eq('id', state.editingSeriesId);
+        error = res.error;
+    } else {
+        const res = await _supabase.from('series').insert([{ nome, segmento_id }]);
+        error = res.error;
+    }
+
     if (error) alert('Erro ao salvar série: ' + error.message);
     else {
         closeSeriesModal();
@@ -1203,16 +1302,96 @@ async function saveSeries() {
 }
 
 async function renderSeriesList() {
+    await fetchSegmentos();
     await fetchSeries();
-    const list = document.getElementById('series-list');
-    list.innerHTML = state.series.map(s => `
-        <tr>
-            <td>${s.nome}</td>
-            <td style="text-align: right;">
-                <button class="btn" style="padding: 0.2rem 0.5rem; background: rgba(239, 68, 68, 0.1); color: var(--danger);" onclick="deleteSeries('${s.id}')">Excluir</button>
-            </td>
-        </tr>
-    `).join('');
+    await renderSegmentList();
+    const container = document.getElementById('series-list');
+    
+    if (state.series.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted); text-align: center; width: 100%;">Nenhuma série cadastrada.</p>';
+        return;
+    }
+
+    // Agrupar por segmento
+    const grouped = {};
+    state.segmentos.forEach(s => grouped[s.id] = { nome: s.nome, items: [] });
+    grouped['none'] = { nome: 'Sem Categoria', items: [] };
+
+    state.series.forEach(s => {
+        const segId = s.segmento_id || 'none';
+        if (!grouped[segId]) grouped[segId] = { nome: 'Outros', items: [] };
+        grouped[segId].items.push(s);
+    });
+
+    let html = state.segmentos.map(seg => {
+        const group = grouped[seg.id] || { nome: seg.nome, items: [] };
+        if (group.items.length === 0) {
+             return `
+                <div class="segment-card">
+                    <div class="segment-header">
+                        <h2><i class="fas fa-folder-open" style="opacity: 0.5;"></i> ${seg.nome}</h2>
+                        <span class="segment-badge">0 Séries</span>
+                    </div>
+                    <div class="segment-content" style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+                        Nenhuma série vinculada a esta turma.
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="segment-card">
+                <div class="segment-header">
+                    <h2><i class="fas fa-layer-group"></i> ${group.nome}</h2>
+                    <span class="segment-badge">${group.items.length} Séries</span>
+                </div>
+                <div class="segment-content">
+                    <table class="series-table">
+                        <tbody>
+                            ${group.items.map(serie => `
+                                <tr>
+                                    <td>${serie.nome}</td>
+                                    <td style="text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
+                                        <button class="btn" style="padding: 0.2rem 0.5rem; background: rgba(99, 102, 241, 0.1); color: #818cf8;" onclick="openSeriesModal('${serie.id}')">Editar</button>
+                                        <button class="btn" style="padding: 0.2rem 0.5rem; background: rgba(239, 68, 68, 0.1); color: var(--danger);" onclick="deleteSeries('${serie.id}')">Excluir</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // Adiciona órfãos (sem categoria) no final
+    if (grouped['none'] && grouped['none'].items.length > 0) {
+        html += `
+            <div class="segment-card" style="border-style: dashed; opacity: 0.8;">
+                <div class="segment-header">
+                    <h2><i class="fas fa-question-circle"></i> Sem Categoria</h2>
+                    <span class="segment-badge">${grouped['none'].items.length} Séries</span>
+                </div>
+                <div class="segment-content">
+                    <table class="series-table">
+                        <tbody>
+                            ${grouped['none'].items.map(serie => `
+                                <tr>
+                                    <td>${serie.nome}</td>
+                                    <td style="text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
+                                        <button class="btn" style="padding: 0.2rem 0.5rem; background: rgba(99, 102, 241, 0.1); color: #818cf8;" onclick="openSeriesModal('${serie.id}')">Editar</button>
+                                        <button class="btn" style="padding: 0.2rem 0.5rem; background: rgba(239, 68, 68, 0.1); color: var(--danger);" onclick="deleteSeries('${serie.id}')">Excluir</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
 }
 
 async function deleteSeries(id) {
@@ -1223,6 +1402,7 @@ async function deleteSeries(id) {
 }
 
 async function initDashboard() {
+    await fetchSegmentos();
     await fetchSeries();
     await renderTrackingList();
     await loadConfig(); // Prefetch config

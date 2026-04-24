@@ -193,21 +193,36 @@
             <section id="section-series" class="section" style="display: none;">
                 <div style="display: flex; flex-direction: column; align-items: center;">
                     <div class="section-header"
-                        style="width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        style="width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h1>Gerenciamento de Séries</h1>
-                        <button class="btn btn-primary" onclick="openSeriesModal()"><i class="fas fa-plus"></i> Nova
-                            Série</button>
+                        <button class="btn btn-primary" onclick="openSeriesModal()"><i class="fas fa-plus"></i> Nova Série</button>
                     </div>
-                    <div class="card table-card" style="width: 100%; max-width: 600px;">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th style="padding-left: 20px;">Nome da Série</th>
-                                    <th style="text-align: right; padding-right: 20px;">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="series-list"></tbody>
-                        </table>
+
+                    <!-- Gerenciamento de Turmas (Inline) -->
+                    <div class="card" style="width: 100%; max-width: 800px; padding: 1.5rem; margin-bottom: 2rem; border-top: 4px solid var(--primary);">
+                        <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem;"><i class="fas fa-layer-group"></i> Gerenciar Turmas</h2>
+                        <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem;">Crie categorias para agrupar suas séries (ex: Fundamental I).</p>
+                        
+                        <div style="display: flex; gap: 10px; margin-bottom: 1.5rem; max-width: 500px;">
+                            <input type="text" id="new-segment-name" placeholder="Nome da nova turma...">
+                            <button class="btn btn-primary" onclick="saveSegment()">Adicionar</button>
+                        </div>
+
+                        <div class="card table-card" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border);">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th style="padding: 0.8rem 1rem;">Nome da Turma</th>
+                                        <th style="text-align: right; padding: 0.8rem 1rem;">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="segment-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="series-list" class="segments-grid">
+                        <!-- Renderizado via JS -->
                     </div>
                 </div>
             </section>
@@ -376,12 +391,18 @@
 
     <div id="series-modal-container" style="display: none;">
         <div class="card modal">
-            <h2>Nova Série</h2>
-            <div class="form-group"><label>Nome</label><input type="text" id="series-name"></div>
+            <h2 id="series-modal-title">Nova Série</h2>
+            <div class="form-group"><label>Nome da Série</label><input type="text" id="series-name" placeholder="Ex: 1º ano A"></div>
+            <div class="form-group">
+                <label>Turma / Segmento</label>
+                <select id="series-segment"></select>
+            </div>
             <div class="modal-footer"><button class="btn" onclick="closeSeriesModal()">Cancelar</button><button
                     class="btn btn-primary" onclick="saveSeries()">Cadastrar</button></div>
         </div>
     </div>
+
+
 
     <!-- Print Area (Hidden) -->
     <div id="print-area" class="print-only">
