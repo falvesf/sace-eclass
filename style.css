@@ -197,6 +197,13 @@ input[type="month"]::-webkit-calendar-picker-indicator {
     transform: scale(1.2);
 }
 
+input.hide-text {
+    color: transparent !important;
+}
+input.hide-text::-webkit-datetime-edit {
+    color: transparent !important;
+}
+
 .btn {
     padding: 0.7rem 1.4rem;
     border-radius: 10px;

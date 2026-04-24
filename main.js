@@ -63,6 +63,7 @@ window.onload = async () => {
         state.user = JSON.parse(savedUser);
         document.getElementById('auth-overlay').style.display = 'none';
         updateUserInfo();
+        await loadConfig();
         await initDashboard();
     }
 };
@@ -171,6 +172,7 @@ async function completeAuth(name, role) {
     localStorage.setItem('sace_user', JSON.stringify(state.user));
     document.getElementById('auth-overlay').style.display = 'none';
     updateUserInfo();
+    await loadConfig();
     await initDashboard();
 }
 
@@ -563,14 +565,14 @@ async function renderTrackingList(shouldFetch = true) {
             if (aw !== null && aw > 0) {
                 labelEl.textContent = `Semana Letiva: ${aw}`;
                 labelEl.style.display = 'block';
-                weekSelectorEl.style.color = 'transparent';
+                weekSelectorEl.classList.add('hide-text');
             } else {
                 labelEl.style.display = 'none';
-                weekSelectorEl.style.color = '';
+                weekSelectorEl.classList.remove('hide-text');
             }
         } else {
             labelEl.style.display = 'none';
-            weekSelectorEl.style.color = '';
+            weekSelectorEl.classList.remove('hide-text');
         }
     }
 
