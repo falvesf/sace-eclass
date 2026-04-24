@@ -896,6 +896,7 @@ async function renderReports() {
     state.teachers.forEach(t => teacherMap[t.id] = t);
 
     const listHtml = { 'Sim': [], 'Não fez': [], 'Parcialmente': [], 'Pendente': [] };
+    const listTotals = { 'Sim': 0, 'Não fez': 0, 'Parcialmente': 0, 'Pendente': 0 };
 
     if (!listError && listTracking) {
         listTracking.sort((a, b) => b.periodo.localeCompare(a.periodo));
@@ -907,12 +908,15 @@ async function renderReports() {
             const sistemas = prof ? (prof.sistemas || ['eclass']) : [];
             if (!prof || !sistemas.includes(state.activeSystem)) return;
 
-            const statusGroup = grouped[item.status] || grouped['Pendente'];
+            const statusKey = grouped[item.status] ? item.status : 'Pendente';
+            const statusGroup = grouped[statusKey];
+            
             if (!statusGroup[prof.id]) {
                 statusGroup[prof.id] = { nome: prof.nome, count: 0, details: [] };
             }
             statusGroup[prof.id].count++;
             statusGroup[prof.id].details.push(`${item.serie} | ${item.periodo.replace(reportPeriodType+'-', '')}`);
+            listTotals[statusKey]++;
         });
 
         Object.keys(grouped).forEach(status => {
@@ -941,7 +945,7 @@ async function renderReports() {
                 <div class="card" style="padding: 1.5rem; border-top: 4px solid var(--success);">
                     <h3 style="color: var(--success); margin-bottom: 1rem; font-size: 1rem; display: flex; justify-content: space-between;">
                         <span><i class="fas fa-check-circle"></i> Sim</span>
-                        <span style="background: rgba(16,185,129,0.15); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${listHtml['Sim'].length}</span>
+                        <span style="background: rgba(16,185,129,0.15); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${listTotals['Sim']}</span>
                     </h3>
                     <div style="display: flex; flex-direction: column; max-height: 400px; overflow-y: auto; padding-right: 5px;" class="scroll-box">
                         ${listHtml['Sim'].join('') || '<span style="color: var(--text-muted); font-size: 0.85rem;">Nenhum registro</span>'}
@@ -950,7 +954,7 @@ async function renderReports() {
                 <div class="card" style="padding: 1.5rem; border-top: 4px solid var(--danger);">
                     <h3 style="color: var(--danger); margin-bottom: 1rem; font-size: 1rem; display: flex; justify-content: space-between;">
                         <span><i class="fas fa-times-circle"></i> Não fez</span>
-                        <span style="background: rgba(239,68,68,0.15); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${listHtml['Não fez'].length}</span>
+                        <span style="background: rgba(239,68,68,0.15); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${listTotals['Não fez']}</span>
                     </h3>
                     <div style="display: flex; flex-direction: column; max-height: 400px; overflow-y: auto; padding-right: 5px;" class="scroll-box">
                         ${listHtml['Não fez'].join('') || '<span style="color: var(--text-muted); font-size: 0.85rem;">Nenhum registro</span>'}
@@ -959,7 +963,7 @@ async function renderReports() {
                 <div class="card" style="padding: 1.5rem; border-top: 4px solid var(--warning);">
                     <h3 style="color: var(--warning); margin-bottom: 1rem; font-size: 1rem; display: flex; justify-content: space-between;">
                         <span><i class="fas fa-exclamation-circle"></i> Parcialmente</span>
-                        <span style="background: rgba(245,158,11,0.15); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${listHtml['Parcialmente'].length}</span>
+                        <span style="background: rgba(245,158,11,0.15); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${listTotals['Parcialmente']}</span>
                     </h3>
                     <div style="display: flex; flex-direction: column; max-height: 400px; overflow-y: auto; padding-right: 5px;" class="scroll-box">
                         ${listHtml['Parcialmente'].join('') || '<span style="color: var(--text-muted); font-size: 0.85rem;">Nenhum registro</span>'}
@@ -968,7 +972,7 @@ async function renderReports() {
                 <div class="card" style="padding: 1.5rem; border-top: 4px solid #64748b;">
                     <h3 style="color: #94a3b8; margin-bottom: 1rem; font-size: 1rem; display: flex; justify-content: space-between;">
                         <span><i class="fas fa-clock"></i> Pendente explícito</span>
-                        <span style="background: rgba(100,116,139,0.15); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${listHtml['Pendente'].length}</span>
+                        <span style="background: rgba(100,116,139,0.15); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${listTotals['Pendente']}</span>
                     </h3>
                     <div style="display: flex; flex-direction: column; max-height: 400px; overflow-y: auto; padding-right: 5px;" class="scroll-box">
                         ${listHtml['Pendente'].join('') || '<span style="color: var(--text-muted); font-size: 0.85rem;">Nenhum registro</span>'}
