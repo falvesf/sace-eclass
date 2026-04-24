@@ -116,13 +116,10 @@ header {
 
 .table-card { padding: 0; overflow: visible; border-radius: 16px; }
 
-/* Table Sticky Header */
+/* Table Header */
 .data-table { width: 100%; border-collapse: separate; border-spacing: 0; }
 .data-table thead th {
-    position: sticky;
-    top: 185px; /* Alinhado com o sticky-wrapper */
-    background: #1e293b; /* Fundo sólido para não ver registros flutuando */
-    z-index: 800;
+    background: rgba(255, 255, 255, 0.03); /* Fundo leve para o cabeçalho */
     text-align: left;
     padding: 1.2rem 1rem;
     color: var(--text-muted);
