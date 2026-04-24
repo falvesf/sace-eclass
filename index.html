@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,15 +13,20 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 </head>
+
 <body>
     <div id="auth-overlay">
         <div class="auth-card">
             <h1>SACE</h1>
             <p style="color: var(--text-muted); margin-bottom: 2rem;">Acesse o Sistema de Controle E-Class</p>
-            <div id="g_id_onload" data-client_id="171306088337-n4jpqlb4n3a9656c3b96bu5lq2arhfbt.apps.googleusercontent.com" data-callback="handleCredentialResponse"></div>
+            <div id="g_id_onload"
+                data-client_id="171306088337-n4jpqlb4n3a9656c3b96bu5lq2arhfbt.apps.googleusercontent.com"
+                data-callback="handleCredentialResponse"></div>
             <div class="g_id_signin" data-type="standard"></div>
             <div style="margin: 2rem 0; border-top: 1px solid var(--border); padding-top: 2rem;">
-                <p style="font-size: 0.8rem; font-weight: bold; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary);">Acesso Rápido</p>
+                <p
+                    style="font-size: 0.8rem; font-weight: bold; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary);">
+                    Acesso Rápido</p>
                 <div class="form-group">
                     <input type="text" id="login-name" placeholder="Seu Nome">
                 </div>
@@ -39,12 +45,15 @@
         <header>
             <div class="logo">
                 <h2 style="display: flex; align-items: center; gap: 10px;">
-                    <div style="background: var(--primary); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem;">E</div>
+                    <div
+                        style="background: var(--primary); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem;">
+                        E</div>
                     SACE
                 </h2>
             </div>
             <nav class="nav-links">
-                <a class="nav-link active" onclick="showSection('tracking')"><i class="fas fa-list-check"></i> Acompanhamento</a>
+                <a class="nav-link active" onclick="showSection('tracking')"><i class="fas fa-list-check"></i>
+                    Acompanhamento</a>
                 <a class="nav-link" onclick="showSection('teachers')"><i class="fas fa-users"></i> Professores</a>
                 <a class="nav-link" onclick="showSection('series')"><i class="fas fa-layer-group"></i> Séries</a>
                 <a class="nav-link" onclick="showSection('reports')"><i class="fas fa-chart-pie"></i> Relatórios</a>
@@ -70,22 +79,32 @@
         <div class="mobile-drawer" id="mobile-drawer">
             <div class="mobile-drawer-header">
                 <h2 style="display:flex;align-items:center;gap:10px;">
-                    <div style="background:var(--primary);width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.9rem;">E</div>
+                    <div
+                        style="background:var(--primary);width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.9rem;">
+                        E</div>
                     SACE
                 </h2>
                 <button class="mobile-close-btn" onclick="closeMobileMenu()"><i class="fas fa-times"></i></button>
             </div>
             <nav class="mobile-nav-links">
-                <a class="mobile-nav-link active" id="m-nav-tracking" onclick="showSection('tracking');closeMobileMenu()"><i class="fas fa-list-check"></i> Acompanhamento</a>
-                <a class="mobile-nav-link" id="m-nav-teachers" onclick="showSection('teachers');closeMobileMenu()"><i class="fas fa-users"></i> Professores</a>
-                <a class="mobile-nav-link" id="m-nav-series" onclick="showSection('series');closeMobileMenu()"><i class="fas fa-layer-group"></i> Séries</a>
-                <a class="mobile-nav-link" id="m-nav-reports" onclick="showSection('reports');closeMobileMenu()"><i class="fas fa-chart-pie"></i> Relatórios</a>
-                <a class="mobile-nav-link" id="m-nav-config" onclick="showSection('config');closeMobileMenu()"><i class="fas fa-cog"></i> Configurações</a>
+                <a class="mobile-nav-link active" id="m-nav-tracking"
+                    onclick="showSection('tracking');closeMobileMenu()"><i class="fas fa-list-check"></i>
+                    Acompanhamento</a>
+                <a class="mobile-nav-link" id="m-nav-teachers" onclick="showSection('teachers');closeMobileMenu()"><i
+                        class="fas fa-users"></i> Professores</a>
+                <a class="mobile-nav-link" id="m-nav-series" onclick="showSection('series');closeMobileMenu()"><i
+                        class="fas fa-layer-group"></i> Séries</a>
+                <a class="mobile-nav-link" id="m-nav-reports" onclick="showSection('reports');closeMobileMenu()"><i
+                        class="fas fa-chart-pie"></i> Relatórios</a>
+                <a class="mobile-nav-link" id="m-nav-config" onclick="showSection('config');closeMobileMenu()"><i
+                        class="fas fa-cog"></i> Configurações</a>
             </nav>
             <div class="mobile-drawer-footer">
                 <div id="mobile-user-name" style="font-weight:700;font-size:0.95rem;"></div>
                 <div id="mobile-user-role" style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;"></div>
-                <button class="btn" style="margin-top:1rem;width:100%;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.2);" onclick="logout()">
+                <button class="btn"
+                    style="margin-top:1rem;width:100%;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.2);"
+                    onclick="logout()">
                     <i class="fas fa-sign-out-alt"></i> Sair
                 </button>
             </div>
@@ -111,8 +130,10 @@
                         </button>
                     </div>
                     <div class="filter-bar">
-                        <input type="text" id="filter-prof" placeholder="Buscar Professor..." oninput="renderTrackingList(false)">
-                        <input type="text" id="filter-serie" placeholder="Buscar Série..." oninput="renderTrackingList(false)">
+                        <input type="text" id="filter-prof" placeholder="Buscar Professor..."
+                            oninput="renderTrackingList(false)">
+                        <input type="text" id="filter-serie" placeholder="Buscar Série..."
+                            oninput="renderTrackingList(false)">
                         <select id="period-type">
                             <option value="daily">Diário</option>
                             <option value="weekly" selected>Semanal</option>
@@ -120,16 +141,20 @@
                             <option value="monthly">Mensal</option>
                         </select>
                         <input type="week" id="week-selector">
-                        <span id="academic-week-label" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); display: none; align-self: center; margin-left: 10px; background: rgba(99,102,241,0.1); padding: 4px 10px; border-radius: 12px; border: 1px solid rgba(99,102,241,0.2);"></span>
+                        <span id="academic-week-label"
+                            style="font-size: 0.85rem; font-weight: 700; color: var(--primary); display: none; align-self: center; margin-left: 10px; background: rgba(99,102,241,0.1); padding: 4px 10px; border-radius: 12px; border: 1px solid rgba(99,102,241,0.2);"></span>
                     </div>
                 </div>
                 <div class="card table-card">
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th onclick="toggleSort('nome')" class="sortable">Professor <i class="fas fa-sort"></i></th>
-                                <th onclick="toggleSort('serie')" class="sortable">Séries <i class="fas fa-sort"></i></th>
-                                <th onclick="toggleSort('status')" class="sortable">Status <i class="fas fa-sort"></i></th>
+                                <th onclick="toggleSort('nome')" class="sortable">Professor <i class="fas fa-sort"></i>
+                                </th>
+                                <th onclick="toggleSort('serie')" class="sortable">Séries <i class="fas fa-sort"></i>
+                                </th>
+                                <th onclick="toggleSort('status')" class="sortable">Status <i class="fas fa-sort"></i>
+                                </th>
                                 <th>Observação / Ação</th>
                             </tr>
                         </thead>
@@ -143,7 +168,8 @@
                 <div class="sticky-wrapper">
                     <div class="section-header">
                         <h1>Cadastro de Professores</h1>
-                        <button class="btn btn-primary" onclick="openTeacherModal()"><i class="fas fa-plus"></i> Novo Professor</button>
+                        <button class="btn btn-primary" onclick="openTeacherModal()"><i class="fas fa-plus"></i> Novo
+                            Professor</button>
                     </div>
                 </div>
                 <div class="card table-card">
@@ -165,9 +191,11 @@
             <!-- Series -->
             <section id="section-series" class="section" style="display: none;">
                 <div style="display: flex; flex-direction: column; align-items: center;">
-                    <div class="section-header" style="width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div class="section-header"
+                        style="width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h1>Gerenciamento de Séries</h1>
-                        <button class="btn btn-primary" onclick="openSeriesModal()"><i class="fas fa-plus"></i> Nova Série</button>
+                        <button class="btn btn-primary" onclick="openSeriesModal()"><i class="fas fa-plus"></i> Nova
+                            Série</button>
                     </div>
                     <div class="card table-card" style="width: 100%; max-width: 600px;">
                         <table class="data-table">
@@ -213,20 +241,25 @@
             <!-- Config -->
             <section id="section-config" class="section" style="display: none;">
                 <div class="card">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+                    <div
+                        style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
                         <h2 style="margin: 0;">Configurações</h2>
                     </div>
 
                     <!-- Configurações Globais -->
                     <div style="margin-bottom: 1.5rem;">
-                        <span style="font-size: 0.78rem; color: var(--text-muted); background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center;">
-                            <i class="fas fa-globe" style="margin-right: 5px;"></i> Configurações do Calendário — afetam todos os usuários
+                        <span
+                            style="font-size: 0.78rem; color: var(--text-muted); background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center;">
+                            <i class="fas fa-globe" style="margin-right: 5px;"></i> Configurações do Calendário — afetam
+                            todos os usuários
                         </span>
                     </div>
-                    <div class="config-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border);">
+                    <div class="config-grid"
+                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border);">
                         <!-- Início do Ano Letivo -->
                         <div class="form-group">
-                            <label style="display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px;">
+                            <label
+                                style="display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px;">
                                 <i class="fas fa-calendar-plus" style="margin-right: 5px;"></i> Início do Ano Letivo
                             </label>
                             <input type="date" id="config-ano-inicio">
@@ -234,7 +267,8 @@
 
                         <!-- Fim do Ano Letivo -->
                         <div class="form-group">
-                            <label style="display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px;">
+                            <label
+                                style="display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px;">
                                 <i class="fas fa-calendar-check" style="margin-right: 5px;"></i> Final do Ano Letivo
                             </label>
                             <input type="date" id="config-ano-fim">
@@ -243,15 +277,18 @@
 
                     <!-- Configurações Pessoais -->
                     <div style="margin-bottom: 1.5rem;">
-                        <span style="font-size: 0.78rem; color: var(--text-muted); background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.25); padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center;">
-                            <i class="fas fa-user" style="margin-right: 5px;"></i> Configurações pessoais — salvas por usuário
+                        <span
+                            style="font-size: 0.78rem; color: var(--text-muted); background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.25); padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center;">
+                            <i class="fas fa-user" style="margin-right: 5px;"></i> Configurações pessoais — salvas por
+                            usuário
                         </span>
                     </div>
 
                     <div class="config-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
                         <!-- Cidade UF -->
                         <div class="form-group">
-                            <label style="display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px;">
+                            <label
+                                style="display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px;">
                                 <i class="fas fa-map-marker-alt" style="margin-right: 5px;"></i> Cidade - UF
                             </label>
                             <input type="text" id="config-cidade-uf" placeholder="Ex: Ibiúna - SP">
@@ -259,24 +296,31 @@
 
                         <!-- Assinatura Digital -->
                         <div class="form-group">
-                            <label style="display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px;">
+                            <label
+                                style="display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px;">
                                 <i class="fas fa-signature" style="margin-right: 5px;"></i> Assinatura Digital
                             </label>
 
                             <!-- Preview da assinatura (oculto até ter imagem) -->
-                            <div id="signature-preview-container" style="display: none; margin-bottom: 12px; background: white; border-radius: 10px; padding: 12px; text-align: center;">
-                                <img id="signature-preview" alt="Prévia da assinatura" style="max-height: 80px; max-width: 100%; object-fit: contain;">
+                            <div id="signature-preview-container"
+                                style="display: none; margin-bottom: 12px; background: white; border-radius: 10px; padding: 12px; text-align: center;">
+                                <img id="signature-preview" alt="Prévia da assinatura"
+                                    style="max-height: 80px; max-width: 100%; object-fit: contain;">
                                 <div style="margin-top: 8px;">
-                                    <button class="btn" style="font-size: 0.75rem; padding: 4px 10px; background: rgba(239,68,68,0.12); color: var(--danger);" onclick="removeSignature()">
+                                    <button class="btn"
+                                        style="font-size: 0.75rem; padding: 4px 10px; background: rgba(239,68,68,0.12); color: var(--danger);"
+                                        onclick="removeSignature()">
                                         <i class="fas fa-trash-alt"></i> Remover
                                     </button>
                                 </div>
                             </div>
 
-                            <button class="btn" style="width: 100%;" onclick="document.getElementById('signature-upload').click()">
+                            <button class="btn" style="width: 100%;"
+                                onclick="document.getElementById('signature-upload').click()">
                                 <i class="fas fa-upload"></i> Subir Imagem
                             </button>
-                            <input type="file" id="signature-upload" accept="image/*" style="display: none;" onchange="handleSignatureUpload(this)">
+                            <input type="file" id="signature-upload" accept="image/*" style="display: none;"
+                                onchange="handleSignatureUpload(this)">
                             <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">
                                 PNG ou JPG com fundo transparente. Aparecerá no Termo de Ciência.
                             </p>
@@ -316,7 +360,8 @@
             </div>
 
             <div class="modal-footer">
-                <button class="btn" style="background: rgba(255,255,255,0.08); color: var(--text-main);" onclick="closeModal()">Cancelar</button>
+                <button class="btn" style="background: rgba(255,255,255,0.08); color: var(--text-main);"
+                    onclick="closeModal()">Cancelar</button>
                 <button class="btn btn-primary" onclick="saveTeacher()">Salvar</button>
             </div>
         </div>
@@ -326,7 +371,8 @@
         <div class="card modal">
             <h2>Nova Série</h2>
             <div class="form-group"><label>Nome</label><input type="text" id="series-name"></div>
-            <div class="modal-footer"><button class="btn" onclick="closeSeriesModal()">Cancelar</button><button class="btn btn-primary" onclick="saveSeries()">Cadastrar</button></div>
+            <div class="modal-footer"><button class="btn" onclick="closeSeriesModal()">Cancelar</button><button
+                    class="btn btn-primary" onclick="saveSeries()">Cadastrar</button></div>
         </div>
     </div>
 
@@ -338,7 +384,8 @@
             <div class="termo-header">
                 <p class="termo-escola" id="print-escola-nome">ESCOLA ADVENTISTA</p>
                 <h1 class="termo-titulo">TERMO DE CIÊNCIA</h1>
-                <p class="termo-subtitulo">Sistema <span id="print-system-name">E-Class</span> — Controle de Preenchimento Semanal</p>
+                <p class="termo-subtitulo">Sistema <span id="print-system-name">E-Class</span> — Controle de
+                    Preenchimento Semanal</p>
             </div>
 
             <div class="termo-linha-divisor"></div>
@@ -346,8 +393,9 @@
             <div class="termo-corpo">
                 <p>
                     Pelo presente termo, declaro estar ciente de que <strong>não realizei o preenchimento</strong>
-                    do Diário Digital (Sistema <span id="print-system-name-body">E-Class</span>) referente à(s) série(s) e período indicados abaixo,
-                    em conformidade com as orientações da coordenação pedagógica da instituição.
+                    do Diário Digital (Sistema <span id="print-system-name-body">E-Class</span>) referente à(s) série(s)
+                    e período indicados abaixo,
+                    em conformidade com as orientações da coordenação pedagógica.
                 </p>
             </div>
 
@@ -401,4 +449,5 @@
 
     <script src="main.js"></script>
 </body>
+
 </html>
