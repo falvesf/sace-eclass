@@ -30,6 +30,7 @@ window.onload = async () => {
     const now = new Date();
     const week = getWeekNumber(now);
     document.getElementById('week-selector').value = `${now.getFullYear()}-W${String(week).padStart(2, '0')}`;
+    updatePeriodSelector();
 
     const savedUser = localStorage.getItem('sace_user');
     if (savedUser) {
@@ -46,6 +47,40 @@ function getWeekNumber(d) {
     var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
     var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
     return weekNo;
+}
+
+// --- Period Selector Dinâmico ---
+function updatePeriodSelector() {
+    const type = document.getElementById('period-type').value;
+    const selector = document.getElementById('week-selector');
+    const title = document.getElementById('tracking-section-title');
+
+    const titleMap = {
+        daily: 'Acompanhamento Diário',
+        weekly: 'Acompanhamento Semanal',
+        fortnightly: 'Acompanhamento Quinzenal',
+        monthly: 'Acompanhamento Mensal'
+    };
+    const inputTypeMap = {
+        daily: 'date',
+        weekly: 'week',
+        fortnightly: 'date',
+        monthly: 'month'
+    };
+
+    selector.type = inputTypeMap[type] || 'week';
+    if (title) title.textContent = titleMap[type] || 'Acompanhamento';
+
+    // Atualiza o valor do seletor para o período atual
+    const now = new Date();
+    if (type === 'weekly') {
+        const week = getWeekNumber(now);
+        selector.value = `${now.getFullYear()}-W${String(week).padStart(2, '0')}`;
+    } else if (type === 'monthly') {
+        selector.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    } else {
+        selector.value = now.toISOString().split('T')[0];
+    }
 }
 
 // --- Authentication ---
@@ -468,30 +503,51 @@ async function updateTracking(teacherId, serie, status, observacao) {
 async function printTerm(teacherId, serie) {
     const teacher = state.teachers.find(t => t.id === teacherId);
     const periodValue = document.getElementById('week-selector').value;
-    
+
     // Load config before printing
     await loadConfig();
 
+    // Format week period (e.g. "2026-W17") to readable Portuguese
+    let periodoFormatado = periodValue;
+    const weekMatch = periodValue.match(/^(\d{4})-W(\d+)$/);
+    if (weekMatch) {
+        const ano = parseInt(weekMatch[1]);
+        const semana = parseInt(weekMatch[2]);
+        // Find Monday of that ISO week
+        const jan4 = new Date(ano, 0, 4);
+        const startOfWeek = new Date(jan4);
+        startOfWeek.setDate(jan4.getDate() - ((jan4.getDay() || 7) - 1) + (semana - 1) * 7);
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 4);
+        const opts = { day: '2-digit', month: '2-digit', year: 'numeric' };
+        periodoFormatado = `Semana ${semana}/${ano} — ${startOfWeek.toLocaleDateString('pt-BR', opts)} a ${endOfWeek.toLocaleDateString('pt-BR', opts)}`;
+    }
+
+    // Fill print fields
     document.getElementById('print-prof-name').textContent = teacher.nome;
-    document.getElementById('print-prof-grades').textContent = serie; 
-    document.getElementById('print-week').textContent = periodValue;
+    document.getElementById('print-prof-grades').textContent = serie;
+    document.getElementById('print-week').textContent = periodoFormatado;
     document.getElementById('print-date').textContent = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
     document.getElementById('print-prof-sign-name').textContent = teacher.nome;
     document.getElementById('print-coord-name').textContent = state.user.name;
     document.getElementById('print-city-uf').textContent = state.config.cidade_uf;
 
+    // Handle coordinator signature image
     const sigImg = document.getElementById('print-coord-signature');
+    const sigContainer = document.querySelector('.termo-assinatura-imagem-container');
     if (state.config.assinatura_url) {
         sigImg.src = state.config.assinatura_url;
         sigImg.style.display = 'block';
+        sigContainer.style.display = 'flex';
+        sigImg.onload = () => window.print();
+        sigImg.onerror = () => {
+            sigImg.style.display = 'none';
+            sigContainer.style.display = 'none';
+            window.print();
+        };
     } else {
         sigImg.style.display = 'none';
-    }
-    
-    // Wait for image to load if visible
-    if (sigImg.style.display === 'block') {
-        sigImg.onload = () => window.print();
-    } else {
+        sigContainer.style.display = 'none';
         window.print();
     }
 }
@@ -553,6 +609,9 @@ async function renderReports() {
             }]
         },
         options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 200 },
             cutout: '60%',
             plugins: { 
                 legend: { position: 'bottom', labels: { color: '#f8fafc', padding: 20 } },
@@ -586,6 +645,8 @@ async function renderReports() {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 200 },
             scales: {
                 y: { beginAtZero: true, max: 100, ticks: { color: '#94a3b8' } },
                 x: { ticks: { color: '#94a3b8' } }
@@ -669,6 +730,6 @@ const periodTypeEl = document.getElementById('period-type');
 const weekSelectorEl = document.getElementById('week-selector');
 const reportPeriodEl = document.getElementById('report-period');
 
-if (periodTypeEl) periodTypeEl.addEventListener('change', () => renderTrackingList());
+if (periodTypeEl) periodTypeEl.addEventListener('change', () => { updatePeriodSelector(); renderTrackingList(); });
 if (weekSelectorEl) weekSelectorEl.addEventListener('change', () => renderTrackingList());
 if (reportPeriodEl) reportPeriodEl.addEventListener('change', renderReports);

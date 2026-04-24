@@ -18,21 +18,32 @@
     font-family: 'Inter', sans-serif;
 }
 
+html {
+    height: 100%;
+}
+
 body {
     background-color: var(--background);
     background-image: 
         radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
         radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.05) 0px, transparent 50%);
+    background-attachment: fixed;
     color: var(--text-main);
-    min-height: 100vh;
+    min-height: 100%;
     color-scheme: dark;
+    overflow-y: auto;
 }
 
 /* Compact Container */
 .app-container {
     max-width: 1100px;
     margin: 0 auto;
-    padding: 0 1.5rem 2rem 1.5rem;
+    padding: 10px 1.5rem 0 1.5rem;
+}
+
+/* Sections */
+.section {
+    padding-top: 1.5rem;
 }
 
 /* Main Header */
@@ -40,23 +51,34 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.5rem 0;
+    padding: 1.2rem 1.5rem;
+    margin-top: 0;
     margin-bottom: 0;
-    background: var(--background);
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
     position: sticky;
-    top: 0;
+    top: 10px;
     z-index: 1000;
 }
 
 /* Sticky Wrapper for Section Controls */
 .sticky-wrapper {
     position: sticky;
-    top: 70px; /* Alinhado logo abaixo do header */
+    top: 88px; /* Alinhado logo abaixo do header flutuante */
     z-index: 900;
-    background: var(--background);
+    background: transparent;
     padding: 1rem 0;
 }
 
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
 .section-header h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; }
 .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
 
@@ -66,7 +88,7 @@ header {
     gap: 8px;
     background: rgba(255, 255, 255, 0.03);
     padding: 6px;
-    border-radius: 14px;
+    border-radius: 999px;
     border: 1px solid var(--border);
 }
 
@@ -74,7 +96,7 @@ header {
     padding: 0.6rem 1.2rem;
     color: var(--text-muted);
     text-decoration: none;
-    border-radius: 10px;
+    border-radius: 999px;
     font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
@@ -160,12 +182,16 @@ input, select {
     font-size: 0.9rem;
 }
 
-/* Week Selector Icon Contrast */
-input[type="week"] {
+/* Week / Date / Month Selector Icon Contrast */
+input[type="week"],
+input[type="date"],
+input[type="month"] {
     position: relative;
     cursor: pointer;
 }
-input[type="week"]::-webkit-calendar-picker-indicator {
+input[type="week"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator {
     filter: invert(1) brightness(2);
     cursor: pointer;
     transform: scale(1.2);
@@ -198,14 +224,47 @@ input[type="week"]::-webkit-calendar-picker-indicator {
 }
 .modal { width: 100%; max-width: 550px; padding: 2rem; }
 
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 1.2rem;
+}
+.form-group label {
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.form-group input,
+.form-group select {
+    width: 100%;
+}
+
 .form-row {
     display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 1.5rem;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 1.2rem;
 }
-.form-row label { min-width: 120px; font-weight: 600; font-size: 0.9rem; }
-.form-row select { flex: 1; }
+.form-row label {
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.form-row select { width: 100%; }
+
+.modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
 
 .scroll-box {
     max-height: 200px;
@@ -218,7 +277,7 @@ input[type="week"]::-webkit-calendar-picker-indicator {
 
 /* Charts */
 .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; }
-.chart-container { height: 300px; display: flex; align-items: center; justify-content: center; }
+.chart-container { height: 300px; position: relative; }
 
 /* Auth Overlay */
 #auth-overlay {
@@ -240,11 +299,172 @@ input[type="week"]::-webkit-calendar-picker-indicator {
     border: 1px solid var(--border);
 }
 
-/* Print Control - CRITICAL FIX */
+/* Print Control */
 .print-only { display: none !important; }
+
 @media print {
-    .print-only { display: block !important; }
-    body * { visibility: hidden; }
-    #print-area, #print-area * { visibility: visible; }
-    #print-area { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; color: black; display: block !important; }
+    /* Ocultar todos os elementos do app */
+    #auth-overlay,
+    .app-container,
+    #modal-container,
+    #series-modal-container {
+        display: none !important;
+    }
+
+    /* Mostrar apenas o termo */
+    #print-area {
+        display: block !important;
+        position: fixed;
+        inset: 0;
+        background: white;
+        color: black;
+        font-family: 'Times New Roman', Times, serif;
+        padding: 0;
+        margin: 0;
+        overflow: hidden;
+    }
+
+    /* Página do termo */
+    .termo-page {
+        width: 100%;
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 60px 60px 40px 60px;
+        box-sizing: border-box;
+        font-size: 12pt;
+        color: #000;
+        line-height: 1.6;
+    }
+
+    /* Cabeçalho */
+    .termo-header {
+        text-align: center;
+        margin-bottom: 8px;
+    }
+    .termo-escola {
+        font-size: 11pt;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0 0 6px 0;
+        color: #000;
+    }
+    .termo-titulo {
+        font-size: 18pt;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin: 0 0 4px 0;
+        color: #000;
+    }
+    .termo-subtitulo {
+        font-size: 9pt;
+        color: #555;
+        margin: 0;
+        font-style: italic;
+    }
+
+    /* Linha divisória */
+    .termo-linha-divisor {
+        border: none;
+        border-top: 2px solid #000;
+        margin: 16px 0;
+    }
+
+    /* Corpo do texto */
+    .termo-corpo {
+        margin-bottom: 24px;
+        text-align: justify;
+        font-size: 12pt;
+    }
+    .termo-corpo p { margin: 0; }
+
+    /* Tabela de informações */
+    .termo-tabela-info {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 24px;
+        border: 1px solid #ccc;
+        font-size: 11pt;
+    }
+    .termo-tabela-info tr:not(:last-child) {
+        border-bottom: 1px solid #ddd;
+    }
+    .termo-label {
+        padding: 8px 12px;
+        font-weight: bold;
+        white-space: nowrap;
+        width: 200px;
+        background: #f5f5f5;
+        color: #000;
+    }
+    .termo-valor {
+        padding: 8px 12px;
+        color: #000;
+    }
+
+    /* Texto de compromisso */
+    .termo-compromisso {
+        margin-bottom: 40px;
+        text-align: justify;
+        font-size: 12pt;
+        font-style: italic;
+        color: #333;
+        border-left: 3px solid #aaa;
+        padding-left: 12px;
+    }
+    .termo-compromisso p { margin: 0; }
+
+    /* Rodapé */
+    .termo-rodape { margin-top: 20px; }
+    .termo-local-data {
+        font-size: 11pt;
+        margin-bottom: 50px;
+        color: #000;
+    }
+
+    /* Bloco de assinaturas */
+    .termo-assinaturas {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 40px;
+    }
+    .termo-assinatura-bloco {
+        flex: 1;
+        text-align: center;
+    }
+    .termo-assinatura-imagem-container {
+        height: 60px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        margin-bottom: 4px;
+    }
+    #print-coord-signature {
+        max-height: 55px;
+        max-width: 180px;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto;
+    }
+    .termo-assinatura-linha {
+        border-top: 1px solid #000;
+        width: 100%;
+        margin-bottom: 6px;
+    }
+    .termo-assinatura-nome {
+        font-size: 11pt;
+        font-weight: bold;
+        margin: 0 0 2px 0;
+        color: #000;
+    }
+    .termo-assinatura-cargo {
+        font-size: 9pt;
+        color: #444;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
 }
+

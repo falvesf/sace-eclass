@@ -64,13 +64,20 @@
             <section id="section-tracking" class="section">
                 <div class="sticky-wrapper">
                     <div class="section-header">
-                        <h1>Acompanhamento Semanal</h1>
-                        <p class="subtitle">Controle de preenchimento do sistema E-Class</p>
+                        <div>
+                            <h1 id="tracking-section-title">Acompanhamento Semanal</h1>
+                            <p class="subtitle">Controle de preenchimento do sistema E-Class</p>
+                        </div>
                     </div>
                     <div class="filter-bar">
                         <input type="text" id="filter-prof" placeholder="Buscar Professor..." oninput="renderTrackingList(false)">
                         <input type="text" id="filter-serie" placeholder="Buscar Série..." oninput="renderTrackingList(false)">
-                        <select id="period-type"><option value="weekly">Semanal</option></select>
+                        <select id="period-type">
+                            <option value="daily">Diário</option>
+                            <option value="weekly" selected>Semanal</option>
+                            <option value="fortnightly">Quinzenal</option>
+                            <option value="monthly">Mensal</option>
+                        </select>
                         <input type="week" id="week-selector">
                     </div>
                 </div>
@@ -140,7 +147,12 @@
                     <select id="report-period" style="width: auto;">
                         <option value="daily">Diário</option>
                         <option value="weekly" selected>Semanal</option>
+                        <option value="fortnightly">Quinzenal</option>
                         <option value="monthly">Mensal</option>
+                        <option value="bimestral">Bimestral</option>
+                        <option value="trimestral">Trimestral</option>
+                        <option value="semestral">Semestral</option>
+                        <option value="anual">Anual</option>
                     </select>
                 </div>
                 <div class="charts-grid">
@@ -179,11 +191,31 @@
     <!-- Modals (Outside main flow) -->
     <div id="modal-container" style="display: none;">
         <div class="card modal">
-            <h2 id="modal-title">Professor</h2>
-            <div class="form-group"><label>Nome</label><input type="text" id="prof-name"></div>
-            <div class="form-row"><label>Tipo</label><select id="prof-type"><option value="regente">Regente</option><option value="especialista">Especialista</option><option value="hibrido">Híbrido</option></select></div>
-            <div class="form-group"><label>Séries</label><div id="series-picker" class="scroll-box"></div></div>
-            <div class="modal-footer"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveTeacher()">Salvar</button></div>
+            <h2 id="modal-title" style="margin-bottom: 1.5rem;">Professor</h2>
+
+            <div class="form-group">
+                <label>Nome</label>
+                <input type="text" id="prof-name" placeholder="Nome completo do professor">
+            </div>
+
+            <div class="form-group">
+                <label>Tipo</label>
+                <select id="prof-type">
+                    <option value="regente">Regente</option>
+                    <option value="especialista">Especialista</option>
+                    <option value="hibrido">Híbrido</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Séries vinculadas</label>
+                <div id="series-picker" class="scroll-box"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn" style="background: rgba(255,255,255,0.08); color: var(--text-main);" onclick="closeModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveTeacher()">Salvar</button>
+            </div>
         </div>
     </div>
 
@@ -196,24 +228,72 @@
     </div>
 
     <!-- Print Area (Hidden) -->
-    <div id="print-area" class="print-only" style="display: none;">
-        <div class="print-header">TERMO DE CIÊNCIA</div>
-        <table class="print-info-table">
-            <tr><td>Docente:</td><td id="print-prof-name"></td></tr>
-            <tr><td>Série:</td><td id="print-prof-grades"></td></tr>
-            <tr><td>Período:</td><td id="print-week"></td></tr>
-        </table>
-        <div class="print-footer">
-            <p><span id="print-city-uf"></span>, <span id="print-date"></span></p>
-            <div style="display: flex; justify-content: space-between; margin-top: 50px;">
-                <div style="border-top: 1px solid #000; width: 40%; text-align: center;">
-                    <br><span id="print-prof-sign-name"></span><br>Assinatura Docente
-                </div>
-                <div style="border-top: 1px solid #000; width: 40%; text-align: center;">
-                    <img id="print-coord-signature" style="max-height: 40px; display: none;"><br><span id="print-coord-name"></span><br>Coordenação
+    <div id="print-area" class="print-only">
+
+        <!-- TERMO MODELO -->
+        <div class="termo-page">
+            <div class="termo-header">
+                <p class="termo-escola" id="print-escola-nome">ESCOLA ADVENTISTA</p>
+                <h1 class="termo-titulo">TERMO DE CIÊNCIA</h1>
+                <p class="termo-subtitulo">Sistema E-Class — Controle de Preenchimento Semanal</p>
+            </div>
+
+            <div class="termo-linha-divisor"></div>
+
+            <div class="termo-corpo">
+                <p>
+                    Pelo presente termo, declaro estar ciente de que <strong>não realizei o preenchimento</strong>
+                    do Diário Digital (Sistema E-Class) referente à(s) série(s) e período indicados abaixo,
+                    em conformidade com as orientações da coordenação pedagógica da instituição.
+                </p>
+            </div>
+
+            <table class="termo-tabela-info">
+                <tr>
+                    <td class="termo-label">Docente:</td>
+                    <td id="print-prof-name" class="termo-valor"></td>
+                </tr>
+                <tr>
+                    <td class="termo-label">Série / Turma:</td>
+                    <td id="print-prof-grades" class="termo-valor"></td>
+                </tr>
+                <tr>
+                    <td class="termo-label">Período de Referência:</td>
+                    <td id="print-week" class="termo-valor"></td>
+                </tr>
+            </table>
+
+            <div class="termo-compromisso">
+                <p>
+                    Comprometo-me a regularizar o lançamento das informações pendentes no sistema
+                    o mais brevemente possível, ciente das orientações e prazos estabelecidos pela coordenação.
+                </p>
+            </div>
+
+            <div class="termo-rodape">
+                <p class="termo-local-data">
+                    <span id="print-city-uf"></span>, <span id="print-date"></span>
+                </p>
+
+                <div class="termo-assinaturas">
+                    <div class="termo-assinatura-bloco">
+                        <div class="termo-assinatura-linha"></div>
+                        <p class="termo-assinatura-nome" id="print-prof-sign-name"></p>
+                        <p class="termo-assinatura-cargo">Assinatura do Docente</p>
+                    </div>
+
+                    <div class="termo-assinatura-bloco">
+                        <div class="termo-assinatura-imagem-container">
+                            <img id="print-coord-signature" alt="Assinatura Digital">
+                        </div>
+                        <div class="termo-assinatura-linha"></div>
+                        <p class="termo-assinatura-nome" id="print-coord-name"></p>
+                        <p class="termo-assinatura-cargo">Coordenação Pedagógica</p>
+                    </div>
                 </div>
             </div>
         </div>
+
     </div>
 
     <script src="main.js"></script>
