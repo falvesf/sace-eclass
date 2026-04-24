@@ -727,7 +727,7 @@ async function printTerm(teacherId, serie) {
         let labelSemana = `Semana ${semana}`;
         const aw = getAcademicWeek(periodValue);
         if (aw !== null && aw > 0) {
-            labelSemana = `Semana Letiva ${aw}`;
+            labelSemana = `Semana ${aw}`;
         }
         
         periodoFormatado = `${labelSemana}/${ano} — ${startOfWeek.toLocaleDateString('pt-BR', opts)} a ${endOfWeek.toLocaleDateString('pt-BR', opts)}`;
