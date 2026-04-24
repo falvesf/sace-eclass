@@ -982,6 +982,49 @@ async function renderReports() {
             </div>
         `;
     }
+
+    // Gerar a versão em tabela para a impressão
+    let printTableHtml = `
+        <table class="report-print-table">
+            <thead>
+                <tr>
+                    <th style="width: 30%;">Professor</th>
+                    <th style="width: 20%;">Status</th>
+                    <th style="width: 50%;">Série | Período</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    const statusColors = { 'Sim': '#10b981', 'Não fez': '#ef4444', 'Parcialmente': '#f59e0b', 'Pendente': '#64748b' };
+    
+    ['Sim', 'Não fez', 'Parcialmente', 'Pendente'].forEach(status => {
+        if (!grouped[status]) return;
+        const profs = Object.values(grouped[status]);
+        profs.sort((a, b) => a.nome.localeCompare(b.nome));
+        
+        profs.forEach(p => {
+            const detailsHtml = p.details.join('<br>');
+            printTableHtml += `
+                <tr>
+                    <td style="font-weight: bold; border-left: 4px solid ${statusColors[status]};">${p.nome}</td>
+                    <td style="color: ${statusColors[status]}; font-weight: bold;">${status} ${p.count > 1 ? `(${p.count})` : ''}</td>
+                    <td>${detailsHtml}</td>
+                </tr>
+            `;
+        });
+    });
+    
+    printTableHtml += `</tbody></table>`;
+    
+    const printContainer = document.getElementById('report-print-table-container');
+    if (printContainer) {
+        if (Object.values(listTotals).reduce((a, b) => a + b, 0) === 0) {
+            printContainer.innerHTML = '<p style="text-align: center; color: #555; padding: 2rem;">Nenhum registro encontrado para este período.</p>';
+        } else {
+            printContainer.innerHTML = printTableHtml;
+        }
+    }
 }
 
 // --- Print Report ---

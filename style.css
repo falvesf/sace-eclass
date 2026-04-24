@@ -488,6 +488,7 @@ input.hide-text::-webkit-datetime-edit {
 
 /* Print Control */
 .print-only { display: none !important; }
+.print-only-report { display: none; }
 
 @media print {
     /* Ocultar todos os elementos do app se NÃO for impressão de relatório */
@@ -533,6 +534,41 @@ input.hide-text::-webkit-datetime-edit {
 
     body.printing-report #section-reports {
         display: block !important;
+    }
+
+    /* Print Table Layout for Reports */
+    body.printing-report #report-teacher-list {
+        display: none !important;
+    }
+
+    body.printing-report .print-only-report {
+        display: block !important;
+        margin-top: 2rem;
+    }
+
+    body.printing-report .charts-grid .card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .report-print-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+        color: #000;
+        background: #fff;
+    }
+
+    .report-print-table th, 
+    .report-print-table td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+    }
+
+    .report-print-table th {
+        background: #f1f5f9;
+        font-weight: bold;
     }
 
     /* Mostrar apenas o termo se NÃO for relatório */
