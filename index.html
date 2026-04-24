@@ -212,19 +212,51 @@
             <!-- Config -->
             <section id="section-config" class="section" style="display: none;">
                 <div class="card">
-                    <h2>Configurações</h2>
-                    <div class="config-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+                        <h2 style="margin: 0;">Configurações</h2>
+                        <span style="font-size: 0.78rem; color: var(--text-muted); background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.25); padding: 4px 12px; border-radius: 20px;">
+                            <i class="fas fa-user" style="margin-right: 5px;"></i> Configurações pessoais — salvas por usuário
+                        </span>
+                    </div>
+
+                    <div class="config-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                        <!-- Cidade UF -->
                         <div class="form-group">
-                            <label>Cidade - UF</label>
-                            <input type="text" id="config-cidade-uf">
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px;">
+                                <i class="fas fa-map-marker-alt" style="margin-right: 5px;"></i> Cidade - UF
+                            </label>
+                            <input type="text" id="config-cidade-uf" placeholder="Ex: Ibiúna - SP">
                         </div>
+
+                        <!-- Assinatura Digital -->
                         <div class="form-group">
-                            <label>Assinatura Digital</label>
-                            <button class="btn" onclick="document.getElementById('signature-upload').click()">Subir Imagem</button>
-                            <input type="file" id="signature-upload" style="display: none;" onchange="handleSignatureUpload(this)">
+                            <label style="display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px;">
+                                <i class="fas fa-signature" style="margin-right: 5px;"></i> Assinatura Digital
+                            </label>
+
+                            <!-- Preview da assinatura (oculto até ter imagem) -->
+                            <div id="signature-preview-container" style="display: none; margin-bottom: 12px; background: white; border-radius: 10px; padding: 12px; text-align: center;">
+                                <img id="signature-preview" alt="Prévia da assinatura" style="max-height: 80px; max-width: 100%; object-fit: contain;">
+                                <div style="margin-top: 8px;">
+                                    <button class="btn" style="font-size: 0.75rem; padding: 4px 10px; background: rgba(239,68,68,0.12); color: var(--danger);" onclick="removeSignature()">
+                                        <i class="fas fa-trash-alt"></i> Remover
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button class="btn" style="width: 100%;" onclick="document.getElementById('signature-upload').click()">
+                                <i class="fas fa-upload"></i> Subir Imagem
+                            </button>
+                            <input type="file" id="signature-upload" accept="image/*" style="display: none;" onchange="handleSignatureUpload(this)">
+                            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">
+                                PNG ou JPG com fundo transparente. Aparecerá no Termo de Ciência.
+                            </p>
                         </div>
                     </div>
-                    <button class="btn btn-primary" onclick="saveConfig()" style="margin-top: 20px;">Salvar</button>
+
+                    <button class="btn btn-primary" onclick="saveConfig()" style="margin-top: 24px;">
+                        <i class="fas fa-save"></i> Salvar Configurações
+                    </button>
                 </div>
             </section>
         </main>

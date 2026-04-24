@@ -206,62 +206,97 @@ function closeMobileMenu() {
 
 // --- Config Management ---
 async function loadConfig() {
-    const { data, error } = await _supabase.from('configuracoes').select('*');
+    if (!state.user) return;
+    const usuario = state.user.name;
+
+    const { data, error } = await _supabase
+        .from('configuracoes')
+        .select('*')
+        .eq('usuario', usuario);
+
     if (!error && data) {
         data.forEach(item => {
             state.config[item.chave] = item.valor;
         });
     }
-    
-    document.getElementById('config-cidade-uf').value = state.config.cidade_uf || '';
-    if (state.config.assinatura_url) {
-        document.getElementById('signature-preview').src = state.config.assinatura_url;
-        document.getElementById('signature-preview-container').style.display = 'block';
+
+    const cidadeEl = document.getElementById('config-cidade-uf');
+    const previewContainer = document.getElementById('signature-preview-container');
+    const previewImg = document.getElementById('signature-preview');
+
+    if (cidadeEl) cidadeEl.value = state.config.cidade_uf || '';
+
+    if (state.config.assinatura_url && previewImg && previewContainer) {
+        previewImg.src = state.config.assinatura_url;
+        previewContainer.style.display = 'block';
+    } else if (previewContainer) {
+        previewContainer.style.display = 'none';
     }
 }
 
 async function handleSignatureUpload(input) {
     if (!input.files || !input.files[0]) return;
-    
+
+    const btnUpload = document.querySelector('#section-config .btn');
+    if (btnUpload) btnUpload.textContent = 'Enviando...';
+
     const file = input.files[0];
     const fileExt = file.name.split('.').pop();
-    const fileName = `sig_${Date.now()}.${fileExt}`;
-    const filePath = `${fileName}`;
+    // Namespace por usuario para evitar colisoes
+    const safeUser = (state.user?.name || 'user').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const fileName = `sig_${safeUser}_${Date.now()}.${fileExt}`;
 
-    // Upload to Supabase Storage (Bucket: assinaturas)
     const { error: uploadError } = await _supabase.storage
         .from('assinaturas')
-        .upload(filePath, file);
+        .upload(fileName, file, { upsert: true });
 
     if (uploadError) {
-        alert('Erro ao subir imagem: ' + uploadError.message);
+        alert('Erro ao enviar imagem: ' + uploadError.message);
+        if (btnUpload) btnUpload.innerHTML = '<i class="fas fa-upload"></i> Subir Imagem';
         return;
     }
 
-    // Get Public URL
     const { data: { publicUrl } } = _supabase.storage
         .from('assinaturas')
-        .getPublicUrl(filePath);
+        .getPublicUrl(fileName);
 
     state.config.assinatura_url = publicUrl;
-    document.getElementById('signature-preview').src = publicUrl;
-    document.getElementById('signature-preview-container').style.display = 'block';
+
+    const previewImg = document.getElementById('signature-preview');
+    const previewContainer = document.getElementById('signature-preview-container');
+    if (previewImg) previewImg.src = publicUrl;
+    if (previewContainer) previewContainer.style.display = 'block';
+    if (btnUpload) btnUpload.innerHTML = '<i class="fas fa-upload"></i> Subir Imagem';
+
+    // Salva imediatamente apos upload
+    await saveConfig(true);
 }
 
-async function saveConfig() {
+function removeSignature() {
+    state.config.assinatura_url = '';
+    const previewContainer = document.getElementById('signature-preview-container');
+    const previewImg = document.getElementById('signature-preview');
+    if (previewImg) previewImg.src = '';
+    if (previewContainer) previewContainer.style.display = 'none';
+    document.getElementById('signature-upload').value = '';
+}
+
+async function saveConfig(silent = false) {
+    if (!state.user) return;
+    const usuario = state.user.name;
     const cidade_uf = document.getElementById('config-cidade-uf').value;
-    
+
     const updates = [
-        { chave: 'cidade_uf', valor: cidade_uf },
-        { chave: 'assinatura_url', valor: state.config.assinatura_url }
+        { chave: 'cidade_uf', valor: cidade_uf, usuario },
+        { chave: 'assinatura_url', valor: state.config.assinatura_url || '', usuario }
     ];
 
     const { error } = await _supabase
         .from('configuracoes')
-        .upsert(updates);
+        .upsert(updates, { onConflict: 'chave, usuario' });
 
     if (error) alert('Erro ao salvar configurações: ' + error.message);
-    else alert('Configurações salvas com sucesso!');
+    else if (!silent) alert('Configurações salvas com sucesso!');
 }
 
 // --- Teacher Management ---
