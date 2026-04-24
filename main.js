@@ -636,9 +636,12 @@ async function printTerm(teacherId, serie) {
     document.getElementById('print-prof-sign-name').textContent = teacher.nome;
     document.getElementById('print-coord-name').textContent = state.user.name;
     document.getElementById('print-city-uf').textContent = state.config.cidade_uf;
-    // Injeta nome do sistema no termo
+    // Injeta nome do sistema no termo (cabeçalho e corpo do texto)
+    const sysLabel = getActiveSystemLabel();
     const sysNameEl = document.getElementById('print-system-name');
-    if (sysNameEl) sysNameEl.textContent = getActiveSystemLabel();
+    const sysNameBodyEl = document.getElementById('print-system-name-body');
+    if (sysNameEl) sysNameEl.textContent = sysLabel;
+    if (sysNameBodyEl) sysNameBodyEl.textContent = sysLabel;
 
     // Handle coordinator signature image
     const sigImg = document.getElementById('print-coord-signature');
