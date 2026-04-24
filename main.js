@@ -1029,12 +1029,40 @@ async function renderReports() {
 
 // --- Print Report ---
 function printReport() {
-    document.body.classList.add('printing-report');
     window.print();
-    setTimeout(() => {
-        document.body.classList.remove('printing-report');
-    }, 1000);
 }
+
+window.addEventListener('beforeprint', () => {
+    if (state.currentSection === 'reports') {
+        document.body.classList.add('printing-report');
+        if (typeof mainChart !== 'undefined' && mainChart) {
+            mainChart.options.plugins.legend.labels.color = '#000';
+            mainChart.options.plugins.datalabels.color = '#000';
+            mainChart.update();
+        }
+        if (typeof trendChart !== 'undefined' && trendChart) {
+            trendChart.options.scales.x.ticks.color = '#000';
+            trendChart.options.scales.y.ticks.color = '#000';
+            trendChart.update();
+        }
+    }
+});
+
+window.addEventListener('afterprint', () => {
+    if (state.currentSection === 'reports') {
+        document.body.classList.remove('printing-report');
+        if (typeof mainChart !== 'undefined' && mainChart) {
+            mainChart.options.plugins.legend.labels.color = '#f8fafc';
+            mainChart.options.plugins.datalabels.color = '#fff';
+            mainChart.update();
+        }
+        if (typeof trendChart !== 'undefined' && trendChart) {
+            trendChart.options.scales.x.ticks.color = '#94a3b8';
+            trendChart.options.scales.y.ticks.color = '#94a3b8';
+            trendChart.update();
+        }
+    }
+});
 
 function getTrendLabels(type) {
     switch(type) {
