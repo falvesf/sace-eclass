@@ -880,12 +880,72 @@ async function renderReports() {
         }
     });
 
+    if (trendChart) trendChart.destroy();
+
     const periodEl = document.getElementById('report-period');
     const reportPeriodType = periodEl ? periodEl.value : 'weekly';
     const trendLabels = getTrendLabels(reportPeriodType);
-    const trendData = trendLabels.map(() => Math.floor(Math.random() * 40) + 60);
 
-    if (trendChart) trendChart.destroy();
+    // 1. Calcular Dados de Tendência Reais
+    let trendData = [];
+    try {
+        // Buscar todos os registros do sistema ativo
+        const { data: trendRaw } = await _supabase
+            .from(getActiveTable())
+            .select('status, periodo');
+
+        if (trendRaw) {
+            // Calcular total de envios esperados por período (professores ativos no sistema)
+            let expectedPerPeriod = 0;
+            state.teachers.forEach(t => {
+                const sistemas = t.sistemas || ['eclass'];
+                if (t.series && sistemas.includes(state.activeSystem)) {
+                    expectedPerPeriod += t.series.length;
+                }
+            });
+
+            // Agrupar dados por período
+            const periodStats = {};
+            trendRaw.forEach(item => {
+                if (!periodStats[item.periodo]) {
+                    periodStats[item.periodo] = { ok: 0, total: 0 };
+                }
+                if (item.status === 'Sim' || item.status === 'Parcialmente') {
+                    periodStats[item.periodo].ok++;
+                }
+            });
+
+            // Gerar chaves de período baseadas nas labels da tendência
+            // Para simplificar, usaremos o ano atual e as labels para buscar correspondência
+            const currentYear = new Date().getFullYear();
+            
+            trendData = trendLabels.map(label => {
+                let searchKey = '';
+                if (reportPeriodType === 'weekly') {
+                    // Tenta converter "Sem X" para "2026-WXX"
+                    const num = label.match(/\d+/);
+                    if (num) searchKey = `weekly-${currentYear}-W${num[0].padStart(2, '0')}`;
+                } else if (reportPeriodType === 'daily') {
+                    // Simplificação: apenas busca correspondência direta no tipo
+                    searchKey = `daily-${label.toLowerCase()}`;
+                } else if (reportPeriodType === 'monthly') {
+                    // Mapeia meses
+                    const months = { 'Jan': 0, 'Fev': 1, 'Mar': 2, 'Abr': 3, 'Mai': 4, 'Jun': 5 };
+                    if (months[label] !== undefined) searchKey = `monthly-${currentYear}-${String(months[label] + 1).padStart(2, '0')}`;
+                } else {
+                    searchKey = `${reportPeriodType}-${label.toLowerCase()}`;
+                }
+
+                const stats = periodStats[searchKey];
+                if (!stats || expectedPerPeriod === 0) return 0;
+                return Math.round((stats.ok / expectedPerPeriod) * 100);
+            });
+        }
+    } catch (e) {
+        console.error("Erro ao calcular tendência:", e);
+        trendData = trendLabels.map(() => 0);
+    }
+
     trendChart = new Chart(ctxTrend, {
         type: 'line',
         data: {
