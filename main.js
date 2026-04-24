@@ -113,6 +113,31 @@ function getAcademicWeek(isoWeekString) {
     return null;
 }
 
+function formatPeriodForDisplay(periodValue) {
+    if (!periodValue) return '';
+    const weekMatch = periodValue.match(/^(\d{4})-W(\d+)$/);
+    if (!weekMatch) return periodValue; // Return as is if not a week format (daily/monthly/etc)
+
+    const ano = parseInt(weekMatch[1]);
+    const semana = parseInt(weekMatch[2]);
+    
+    // Encontrar segunda-feira dessa semana ISO
+    const jan4 = new Date(ano, 0, 4);
+    const startOfWeek = new Date(jan4);
+    startOfWeek.setDate(jan4.getDate() - ((jan4.getDay() || 7) - 1) + (semana - 1) * 7);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 4);
+    const opts = { day: '2-digit', month: '2-digit' };
+    
+    let labelSemana = `Semana ${semana}`;
+    const aw = getAcademicWeek(periodValue);
+    if (aw !== null && aw > 0) {
+        labelSemana = `Semana Letiva ${aw}`;
+    }
+    
+    return `${labelSemana} (${startOfWeek.toLocaleDateString('pt-BR', opts)} a ${endOfWeek.toLocaleDateString('pt-BR', opts)})`;
+}
+
 // --- Period Selector Dinâmico ---
 function updatePeriodSelector() {
     const type = document.getElementById('period-type').value;
@@ -924,7 +949,10 @@ async function renderReports() {
             
             profs.forEach(p => {
                 const badge = p.count > 1 ? `<span style="background: rgba(255,255,255,0.1); color: var(--text-main); padding: 2px 6px; border-radius: 12px; font-size: 0.75rem; margin-left: 8px;">${p.count}</span>` : '';
-                const detailsHtml = p.details.map(d => `<div>${d}</div>`).join('');
+                const detailsHtml = p.details.map(d => {
+                    const [serie, periodPart] = d.split(' | ');
+                    return `<div>${serie} | ${formatPeriodForDisplay(periodPart)}</div>`;
+                }).join('');
                 
                 const html = `
                     <div style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
@@ -1003,7 +1031,11 @@ async function renderReports() {
         profs.sort((a, b) => a.nome.localeCompare(b.nome));
         
         profs.forEach(p => {
-            const detailsHtml = p.details.join('<br>');
+            const detailsHtml = p.details.map(d => {
+                const [serie, periodPart] = d.split(' | ');
+                return `${serie} | ${formatPeriodForDisplay(periodPart)}`;
+            }).join('<br>');
+            
             printTableHtml += `
                 <tr>
                     <td style="font-weight: bold; border-left: 4px solid ${statusColors[status]};">${p.nome}</td>
