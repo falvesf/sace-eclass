@@ -553,6 +553,36 @@ input.hide-text::-webkit-datetime-edit {
         background: transparent !important;
     }
 
+    /* Force all SVG and chart text to black */
+    body.printing-report canvas + * { color: #000 !important; }
+
+    /* Override chart legend colors globally via Chart.js defaults fallback */
+    body.printing-report .chartjs-legend li span,
+    body.printing-report text,
+    body.printing-report tspan {
+        color: #000 !important;
+        fill: #000 !important;
+    }
+
+    /* Section title */
+    body.printing-report #report-section-title {
+        color: #1e293b !important;
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Print table title */
+    body.printing-report #report-print-table-container::before {
+        content: "Detalhamento por Status";
+        display: block;
+        font-weight: bold;
+        font-size: 1rem;
+        color: #1e293b;
+        margin-bottom: 0.75rem;
+        border-bottom: 2px solid #1e293b;
+        padding-bottom: 0.4rem;
+    }
+
     /* Print Table Layout for Reports */
     body.printing-report #report-teacher-list {
         display: none !important;

@@ -897,11 +897,10 @@ async function renderReports() {
 
     const listHtml = { 'Sim': [], 'Não fez': [], 'Parcialmente': [], 'Pendente': [] };
     const listTotals = { 'Sim': 0, 'Não fez': 0, 'Parcialmente': 0, 'Pendente': 0 };
+    const grouped = { 'Sim': {}, 'Não fez': {}, 'Parcialmente': {}, 'Pendente': {} };
 
     if (!listError && listTracking) {
         listTracking.sort((a, b) => b.periodo.localeCompare(a.periodo));
-        
-        const grouped = { 'Sim': {}, 'Não fez': {}, 'Parcialmente': {}, 'Pendente': {} };
 
         listTracking.forEach(item => {
             const prof = teacherMap[item.professor_id];
@@ -1036,14 +1035,16 @@ window.addEventListener('beforeprint', () => {
     if (state.currentSection === 'reports') {
         document.body.classList.add('printing-report');
         if (typeof mainChart !== 'undefined' && mainChart) {
-            mainChart.options.plugins.legend.labels.color = '#000';
-            mainChart.options.plugins.datalabels.color = '#000';
-            mainChart.update();
+            mainChart.options.plugins.legend.labels.color = '#000000';
+            if (mainChart.options.plugins.datalabels) {
+                mainChart.options.plugins.datalabels.color = '#000000';
+            }
+            mainChart.update('none');
         }
         if (typeof trendChart !== 'undefined' && trendChart) {
-            trendChart.options.scales.x.ticks.color = '#000';
-            trendChart.options.scales.y.ticks.color = '#000';
-            trendChart.update();
+            trendChart.options.scales.x.ticks.color = '#000000';
+            trendChart.options.scales.y.ticks.color = '#000000';
+            trendChart.update('none');
         }
     }
 });
@@ -1053,13 +1054,15 @@ window.addEventListener('afterprint', () => {
         document.body.classList.remove('printing-report');
         if (typeof mainChart !== 'undefined' && mainChart) {
             mainChart.options.plugins.legend.labels.color = '#f8fafc';
-            mainChart.options.plugins.datalabels.color = '#fff';
-            mainChart.update();
+            if (mainChart.options.plugins.datalabels) {
+                mainChart.options.plugins.datalabels.color = '#ffffff';
+            }
+            mainChart.update('none');
         }
         if (typeof trendChart !== 'undefined' && trendChart) {
             trendChart.options.scales.x.ticks.color = '#94a3b8';
             trendChart.options.scales.y.ticks.color = '#94a3b8';
-            trendChart.update();
+            trendChart.update('none');
         }
     }
 });
