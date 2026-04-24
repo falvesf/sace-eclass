@@ -490,16 +490,53 @@ input.hide-text::-webkit-datetime-edit {
 .print-only { display: none !important; }
 
 @media print {
-    /* Ocultar todos os elementos do app */
-    #auth-overlay,
-    .app-container,
-    #modal-container,
-    #series-modal-container {
+    /* Ocultar todos os elementos do app se NÃO for impressão de relatório */
+    body:not(.printing-report) #auth-overlay,
+    body:not(.printing-report) .app-container,
+    body:not(.printing-report) #modal-container,
+    body:not(.printing-report) #series-modal-container {
         display: none !important;
     }
 
-    /* Mostrar apenas o termo */
-    #print-area {
+    body.printing-report #auth-overlay,
+    body.printing-report header,
+    body.printing-report .mobile-overlay,
+    body.printing-report .mobile-drawer,
+    body.printing-report #print-area,
+    body.printing-report .system-switcher,
+    body.printing-report #btn-print-report,
+    body.printing-report #report-period {
+        display: none !important;
+    }
+
+    body.printing-report {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        background: #0f172a !important;
+        color: #f8fafc !important;
+    }
+
+    body.printing-report .app-container {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    body.printing-report main {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    body.printing-report .section {
+        display: none !important;
+    }
+
+    body.printing-report #section-reports {
+        display: block !important;
+    }
+
+    /* Mostrar apenas o termo se NÃO for relatório */
+    body:not(.printing-report) #print-area {
         display: block !important;
         position: fixed;
         inset: 0;

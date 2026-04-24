@@ -41,7 +41,15 @@ async function switchSystem(system) {
     const sub = document.getElementById('tracking-subtitle');
     if (sub) sub.textContent = `Controle de preenchimento do sistema ${getActiveSystemLabel()}`;
 
-    await renderTrackingList(true);
+    if (state.currentSection === 'tracking') {
+        await renderTrackingList(true);
+    } else if (state.currentSection === 'reports') {
+        const titleEl = document.getElementById('report-section-title');
+        if (titleEl) {
+            titleEl.textContent = `Relatórios - ${getActiveSystemLabel()}`;
+        }
+        await renderReports();
+    }
 }
 
 const periods = {
@@ -208,7 +216,13 @@ async function showSection(id) {
     if (id === 'tracking') await renderTrackingList();
     if (id === 'teachers') await renderTeacherList();
     if (id === 'series') await renderSeriesList();
-    if (id === 'reports') await renderReports();
+    if (id === 'reports') {
+        const titleEl = document.getElementById('report-section-title');
+        if (titleEl) {
+            titleEl.textContent = `Relatórios - ${state.activeSystem === 'eclass' ? 'E-Class' : 'Sequência Didática'}`;
+        }
+        await renderReports();
+    }
     if (id === 'config') await loadConfig();
 }
 
@@ -784,8 +798,8 @@ async function renderReports() {
     const periodType = document.getElementById('period-type').value;
     const currentKey = `${periodType}-${periodValue}`;
 
-    // 1. Buscar registros existentes do sistema ativo
-    const { data: allTracking, error } = await _supabase
+    // 1. Buscar registros existentes do sistema ativo para o gráfico (Geral da semana)
+    const { data: chartTracking, error } = await _supabase
         .from(getActiveTable())
         .select('status')
         .eq('periodo', currentKey);
@@ -800,8 +814,8 @@ async function renderReports() {
     const stats = { sim: 0, nao: 0, parcial: 0, pendente: 0 };
     let totalRecorded = 0;
 
-    if (!error && allTracking) {
-        allTracking.forEach(item => {
+    if (!error && chartTracking) {
+        chartTracking.forEach(item => {
             if (item.status === 'Sim') stats.sim++;
             else if (item.status === 'Não fez') stats.nao++;
             else if (item.status === 'Parcialmente') stats.parcial++;
@@ -871,6 +885,93 @@ async function renderReports() {
             plugins: { legend: { display: false } }
         }
     });
+
+    // 4. Buscar e renderizar listagem de professores por status baseada no combobox do relatório
+    const { data: listTracking, error: listError } = await _supabase
+        .from(getActiveTable())
+        .select('professor_id, serie, status, periodo')
+        .like('periodo', `${reportPeriodType}-%`);
+
+    const teacherMap = {};
+    state.teachers.forEach(t => teacherMap[t.id] = t);
+
+    const listHtml = { 'Sim': [], 'Não fez': [], 'Parcialmente': [], 'Pendente': [] };
+
+    if (!listError && listTracking) {
+        // Ordenar por período de forma decrescente para mostrar os mais recentes primeiro
+        listTracking.sort((a, b) => b.periodo.localeCompare(a.periodo));
+        
+        listTracking.forEach(item => {
+            const prof = teacherMap[item.professor_id];
+            const sistemas = prof ? (prof.sistemas || ['eclass']) : [];
+            if (!prof || !sistemas.includes(state.activeSystem)) return;
+
+            const html = `
+                <div style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <div style="font-weight: 600; font-size: 0.9rem;">${prof.nome}</div>
+                    <div style="color: var(--text-muted); font-size: 0.75rem;">${item.serie} | ${item.periodo.replace(reportPeriodType+'-', '')}</div>
+                </div>
+            `;
+            if (item.status === 'Sim') listHtml['Sim'].push(html);
+            else if (item.status === 'Não fez') listHtml['Não fez'].push(html);
+            else if (item.status === 'Parcialmente') listHtml['Parcialmente'].push(html);
+            else listHtml['Pendente'].push(html);
+        });
+    }
+
+    const container = document.getElementById('report-teacher-list');
+    if (container) {
+        container.innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
+                <div class="card" style="padding: 1.5rem; border-top: 4px solid var(--success);">
+                    <h3 style="color: var(--success); margin-bottom: 1rem; font-size: 1rem; display: flex; justify-content: space-between;">
+                        <span><i class="fas fa-check-circle"></i> Sim</span>
+                        <span style="background: rgba(16,185,129,0.15); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${listHtml['Sim'].length}</span>
+                    </h3>
+                    <div style="display: flex; flex-direction: column; max-height: 400px; overflow-y: auto; padding-right: 5px;" class="scroll-box">
+                        ${listHtml['Sim'].join('') || '<span style="color: var(--text-muted); font-size: 0.85rem;">Nenhum registro</span>'}
+                    </div>
+                </div>
+                <div class="card" style="padding: 1.5rem; border-top: 4px solid var(--danger);">
+                    <h3 style="color: var(--danger); margin-bottom: 1rem; font-size: 1rem; display: flex; justify-content: space-between;">
+                        <span><i class="fas fa-times-circle"></i> Não fez</span>
+                        <span style="background: rgba(239,68,68,0.15); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${listHtml['Não fez'].length}</span>
+                    </h3>
+                    <div style="display: flex; flex-direction: column; max-height: 400px; overflow-y: auto; padding-right: 5px;" class="scroll-box">
+                        ${listHtml['Não fez'].join('') || '<span style="color: var(--text-muted); font-size: 0.85rem;">Nenhum registro</span>'}
+                    </div>
+                </div>
+                <div class="card" style="padding: 1.5rem; border-top: 4px solid var(--warning);">
+                    <h3 style="color: var(--warning); margin-bottom: 1rem; font-size: 1rem; display: flex; justify-content: space-between;">
+                        <span><i class="fas fa-exclamation-circle"></i> Parcialmente</span>
+                        <span style="background: rgba(245,158,11,0.15); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${listHtml['Parcialmente'].length}</span>
+                    </h3>
+                    <div style="display: flex; flex-direction: column; max-height: 400px; overflow-y: auto; padding-right: 5px;" class="scroll-box">
+                        ${listHtml['Parcialmente'].join('') || '<span style="color: var(--text-muted); font-size: 0.85rem;">Nenhum registro</span>'}
+                    </div>
+                </div>
+                <div class="card" style="padding: 1.5rem; border-top: 4px solid #64748b;">
+                    <h3 style="color: #94a3b8; margin-bottom: 1rem; font-size: 1rem; display: flex; justify-content: space-between;">
+                        <span><i class="fas fa-clock"></i> Pendente explícito</span>
+                        <span style="background: rgba(100,116,139,0.15); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${listHtml['Pendente'].length}</span>
+                    </h3>
+                    <div style="display: flex; flex-direction: column; max-height: 400px; overflow-y: auto; padding-right: 5px;" class="scroll-box">
+                        ${listHtml['Pendente'].join('') || '<span style="color: var(--text-muted); font-size: 0.85rem;">Nenhum registro</span>'}
+                        <div style="margin-top: 15px; font-size: 0.75rem; color: var(--text-muted); font-style: italic;">*Apenas pendências explícitas lançadas.</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// --- Print Report ---
+function printReport() {
+    document.body.classList.add('printing-report');
+    window.print();
+    setTimeout(() => {
+        document.body.classList.remove('printing-report');
+    }, 1000);
 }
 
 function getTrendLabels(type) {

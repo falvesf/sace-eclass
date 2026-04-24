@@ -214,18 +214,21 @@
 
             <!-- Reports -->
             <section id="section-reports" class="section" style="display: none;">
-                <div class="section-header">
-                    <h1>Relatórios</h1>
-                    <select id="report-period" style="width: auto;">
-                        <option value="daily">Diário</option>
-                        <option value="weekly" selected>Semanal</option>
-                        <option value="fortnightly">Quinzenal</option>
-                        <option value="monthly">Mensal</option>
-                        <option value="bimestral">Bimestral</option>
-                        <option value="trimestral">Trimestral</option>
-                        <option value="semestral">Semestral</option>
-                        <option value="anual">Anual</option>
-                    </select>
+                <div class="section-header" style="flex-wrap: wrap; gap: 10px;">
+                    <h1 id="report-section-title">Relatórios</h1>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <button class="btn btn-primary" id="btn-print-report" onclick="printReport()"><i class="fas fa-print"></i> Imprimir</button>
+                        <select id="report-period" style="width: auto;" onchange="renderReports()">
+                            <option value="daily">Diário</option>
+                            <option value="weekly" selected>Semanal</option>
+                            <option value="fortnightly">Quinzenal</option>
+                            <option value="monthly">Mensal</option>
+                            <option value="bimestral">Bimestral</option>
+                            <option value="trimestral">Trimestral</option>
+                            <option value="semestral">Semestral</option>
+                            <option value="anual">Anual</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="charts-grid">
                     <div class="card">
@@ -237,6 +240,8 @@
                         <div class="chart-container"><canvas id="trendChart"></canvas></div>
                     </div>
                 </div>
+                
+                <div id="report-teacher-list" style="margin-top: 2rem;"></div>
             </section>
 
             <!-- Config -->
