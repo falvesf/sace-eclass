@@ -556,17 +556,21 @@ async function renderTrackingList(shouldFetch = true) {
     
     // Set academic week label if weekly
     const labelEl = document.getElementById('academic-week-label');
-    if (labelEl) {
+    const weekSelectorEl = document.getElementById('week-selector');
+    if (labelEl && weekSelectorEl) {
         if (periodType === 'weekly' && periodValue) {
             const aw = getAcademicWeek(periodValue);
             if (aw !== null && aw > 0) {
                 labelEl.textContent = `Semana Letiva: ${aw}`;
-                labelEl.style.display = 'inline-block';
+                labelEl.style.display = 'block';
+                weekSelectorEl.style.color = 'transparent';
             } else {
                 labelEl.style.display = 'none';
+                weekSelectorEl.style.color = '';
             }
         } else {
             labelEl.style.display = 'none';
+            weekSelectorEl.style.color = '';
         }
     }
 

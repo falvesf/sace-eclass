@@ -140,9 +140,10 @@
                             <option value="fortnightly">Quinzenal</option>
                             <option value="monthly">Mensal</option>
                         </select>
-                        <input type="week" id="week-selector">
-                        <span id="academic-week-label"
-                            style="font-size: 0.85rem; font-weight: 700; color: var(--primary); display: none; align-self: center; margin-left: 10px; background: rgba(99,102,241,0.1); padding: 4px 10px; border-radius: 12px; border: 1px solid rgba(99,102,241,0.2);"></span>
+                        <div style="position: relative; flex: 1; min-width: 150px; display: flex;">
+                            <input type="week" id="week-selector" style="width: 100%;">
+                            <span id="academic-week-label" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; font-weight: 500; color: white; pointer-events: none; display: none;"></span>
+                        </div>
                     </div>
                 </div>
                 <div class="card table-card">
