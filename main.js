@@ -124,6 +124,11 @@ function updateUserInfo() {
     const roleEl = document.getElementById('user-role-label');
     if (nameEl) nameEl.textContent = state.user.name;
     if (roleEl) roleEl.textContent = state.user.role;
+    // Atualiza também o drawer mobile
+    const mName = document.getElementById('mobile-user-name');
+    const mRole = document.getElementById('mobile-user-role');
+    if (mName) mName.textContent = state.user.name;
+    if (mRole) mRole.textContent = state.user.role;
 }
 
 // --- Navigation ---
@@ -131,10 +136,16 @@ async function showSection(id) {
     document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
     document.getElementById(`section-${id}`).style.display = 'block';
     
+    // Atualiza nav desktop
     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
     const activeLink = Array.from(document.querySelectorAll('.nav-link'))
         .find(l => l.getAttribute('onclick')?.includes(id));
     if (activeLink) activeLink.classList.add('active');
+
+    // Atualiza nav mobile (drawer)
+    document.querySelectorAll('.mobile-nav-link').forEach(l => l.classList.remove('active'));
+    const mobileLink = document.getElementById(`m-nav-${id}`);
+    if (mobileLink) mobileLink.classList.add('active');
     
     state.currentSection = id;
     if (id === 'tracking') await renderTrackingList();
@@ -142,6 +153,29 @@ async function showSection(id) {
     if (id === 'series') await renderSeriesList();
     if (id === 'reports') await renderReports();
     if (id === 'config') await loadConfig();
+}
+
+// --- Mobile Navigation ---
+function toggleMobileMenu() {
+    const drawer = document.getElementById('mobile-drawer');
+    const overlay = document.getElementById('mobile-overlay');
+    const hamburger = document.getElementById('hamburger-btn');
+    const isOpen = drawer.classList.contains('open');
+    if (isOpen) {
+        drawer.classList.remove('open');
+        overlay.classList.remove('open');
+        hamburger.classList.remove('open');
+    } else {
+        drawer.classList.add('open');
+        overlay.classList.add('open');
+        hamburger.classList.add('open');
+    }
+}
+
+function closeMobileMenu() {
+    document.getElementById('mobile-drawer').classList.remove('open');
+    document.getElementById('mobile-overlay').classList.remove('open');
+    document.getElementById('hamburger-btn').classList.remove('open');
 }
 
 // --- Config Management ---

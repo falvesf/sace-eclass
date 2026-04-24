@@ -57,7 +57,39 @@
                 </div>
                 <button class="btn-exit" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
             </div>
+            <!-- Botão Hambúrguer (somente mobile) -->
+            <button class="hamburger" id="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Abrir menu">
+                <span></span><span></span><span></span>
+            </button>
         </header>
+
+        <!-- Overlay Mobile -->
+        <div class="mobile-overlay" id="mobile-overlay" onclick="closeMobileMenu()"></div>
+
+        <!-- Drawer de Navegação Mobile -->
+        <div class="mobile-drawer" id="mobile-drawer">
+            <div class="mobile-drawer-header">
+                <h2 style="display:flex;align-items:center;gap:10px;">
+                    <div style="background:var(--primary);width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.9rem;">E</div>
+                    SACE
+                </h2>
+                <button class="mobile-close-btn" onclick="closeMobileMenu()"><i class="fas fa-times"></i></button>
+            </div>
+            <nav class="mobile-nav-links">
+                <a class="mobile-nav-link active" id="m-nav-tracking" onclick="showSection('tracking');closeMobileMenu()"><i class="fas fa-list-check"></i> Acompanhamento</a>
+                <a class="mobile-nav-link" id="m-nav-teachers" onclick="showSection('teachers');closeMobileMenu()"><i class="fas fa-users"></i> Professores</a>
+                <a class="mobile-nav-link" id="m-nav-series" onclick="showSection('series');closeMobileMenu()"><i class="fas fa-layer-group"></i> Séries</a>
+                <a class="mobile-nav-link" id="m-nav-reports" onclick="showSection('reports');closeMobileMenu()"><i class="fas fa-chart-pie"></i> Relatórios</a>
+                <a class="mobile-nav-link" id="m-nav-config" onclick="showSection('config');closeMobileMenu()"><i class="fas fa-cog"></i> Configurações</a>
+            </nav>
+            <div class="mobile-drawer-footer">
+                <div id="mobile-user-name" style="font-weight:700;font-size:0.95rem;"></div>
+                <div id="mobile-user-role" style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;"></div>
+                <button class="btn" style="margin-top:1rem;width:100%;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.2);" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+            </div>
+        </div>
 
         <main>
             <!-- Tracking -->
