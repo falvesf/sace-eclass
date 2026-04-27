@@ -114,10 +114,13 @@
             <!-- Tracking -->
             <section id="section-tracking" class="section">
                 <div class="sticky-wrapper">
-                    <div class="section-header">
+                    <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap;">
                         <div>
                             <h1 id="tracking-section-title">Acompanhamento Semanal</h1>
                             <p class="subtitle" id="tracking-subtitle">Controle de preenchimento do sistema E-Class</p>
+                        </div>
+                        <div id="tracking-stats" class="stats-summary">
+                            <!-- JS will populate this -->
                         </div>
                     </div>
                     <!-- Seletor de Sistema -->
@@ -144,12 +147,23 @@
                             <input type="week" id="week-selector" style="width: 100%;">
                             <span id="academic-week-label" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; font-weight: 500; color: white; pointer-events: none; display: none;"></span>
                         </div>
+                        <div class="print-actions" style="display: flex; gap: 10px;">
+                            <button id="btn-print-selected" class="btn" style="display: none; background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);" onclick="printSelectedTerms()">
+                                <i class="fas fa-print"></i> Da Seleção
+                            </button>
+                            <button id="btn-print-all" class="btn btn-primary" onclick="printAllTerms()">
+                                <i class="fas fa-print"></i> Imprimir Geral
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="card table-card">
                     <table class="data-table">
                         <thead>
                             <tr>
+                                <th style="width: 40px; text-align: center;">
+                                    <input type="checkbox" id="select-all-tracking" onclick="toggleSelectAll(this.checked)">
+                                </th>
                                 <th onclick="toggleSort('nome')" class="sortable">Professor <i class="fas fa-sort"></i>
                                 </th>
                                 <th onclick="toggleSort('serie')" class="sortable">Séries <i class="fas fa-sort"></i>
@@ -406,13 +420,16 @@
 
     <!-- Print Area (Hidden) -->
     <div id="print-area" class="print-only">
+        <!-- Contéudo será gerado dinamicamente via JS -->
+    </div>
 
-        <!-- TERMO MODELO -->
+    <!-- Template do Termo (Oculto) -->
+    <template id="termo-template">
         <div class="termo-page">
             <div class="termo-header">
-                <p class="termo-escola" id="print-escola-nome">ESCOLA ADVENTISTA</p>
+                <p class="termo-escola print-escola-nome">ESCOLA ADVENTISTA</p>
                 <h1 class="termo-titulo">TERMO DE CIÊNCIA</h1>
-                <p class="termo-subtitulo">Sistema <span id="print-system-name">E-Class</span> — Controle de
+                <p class="termo-subtitulo">Sistema <span class="print-system-name">E-Class</span> — Controle de
                     Preenchimento Semanal</p>
             </div>
 
@@ -421,7 +438,7 @@
             <div class="termo-corpo">
                 <p>
                     Pelo presente termo, declaro estar ciente de que <strong>não realizei o preenchimento</strong>
-                    do Diário Digital (Sistema <span id="print-system-name-body">E-Class</span>) referente à(s) série(s)
+                    do Diário Digital (Sistema <span class="print-system-name-body">E-Class</span>) referente à(s) série(s)
                     e período indicados abaixo,
                     em conformidade com as orientações da coordenação pedagógica.
                 </p>
@@ -430,15 +447,15 @@
             <table class="termo-tabela-info">
                 <tr>
                     <td class="termo-label">Docente:</td>
-                    <td id="print-prof-name" class="termo-valor"></td>
+                    <td class="print-prof-name termo-valor"></td>
                 </tr>
                 <tr>
                     <td class="termo-label">Série / Turma:</td>
-                    <td id="print-prof-grades" class="termo-valor"></td>
+                    <td class="print-prof-grades termo-valor"></td>
                 </tr>
                 <tr>
                     <td class="termo-label">Período de Referência:</td>
-                    <td id="print-week" class="termo-valor"></td>
+                    <td class="print-week termo-valor"></td>
                 </tr>
             </table>
 
@@ -451,29 +468,28 @@
 
             <div class="termo-rodape">
                 <p class="termo-local-data">
-                    <span id="print-city-uf"></span>, <span id="print-date"></span>
+                    <span class="print-city-uf"></span>, <span class="print-date"></span>
                 </p>
 
                 <div class="termo-assinaturas">
                     <div class="termo-assinatura-bloco">
                         <div class="termo-assinatura-linha"></div>
-                        <p class="termo-assinatura-nome" id="print-prof-sign-name"></p>
+                        <p class="termo-assinatura-nome print-prof-sign-name"></p>
                         <p class="termo-assinatura-cargo">Assinatura do Docente</p>
                     </div>
 
                     <div class="termo-assinatura-bloco">
                         <div class="termo-assinatura-imagem-container">
-                            <img id="print-coord-signature" alt="Assinatura Digital">
+                            <img class="print-coord-signature" alt="Assinatura Digital">
                         </div>
                         <div class="termo-assinatura-linha"></div>
-                        <p class="termo-assinatura-nome" id="print-coord-name"></p>
+                        <p class="termo-assinatura-nome print-coord-name"></p>
                         <p class="termo-assinatura-cargo">Coordenação Pedagógica</p>
                     </div>
                 </div>
             </div>
         </div>
-
-    </div>
+    </template>
 
     <script src="main.js"></script>
 </body>

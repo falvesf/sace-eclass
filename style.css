@@ -77,10 +77,51 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 15px;
 }
-.section-header h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; }
+.section-header h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; }
 .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
+
+/* Stats Summary */
+.stats-summary {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.stat-badge {
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 60px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.3s ease;
+}
+
+.stat-badge .count {
+    font-size: 1rem;
+    color: white;
+}
+
+.stat-badge .label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    opacity: 0.6;
+    margin-top: 2px;
+}
+
+.stat-badge.total { border-color: rgba(99, 102, 241, 0.3); }
+.stat-badge.pendente { border-color: rgba(148, 163, 184, 0.2); color: #94a3b8; }
+.stat-badge.sim { border-color: rgba(16, 185, 129, 0.3); color: #10b981; }
+.stat-badge.nao { border-color: rgba(239, 68, 68, 0.3); color: #ef4444; }
+.stat-badge.parcial { border-color: rgba(245, 158, 11, 0.3); color: #f59e0b; }
 
 /* Navigation Links */
 .nav-links {
@@ -162,6 +203,21 @@ th.sortable i { font-size: 0.7rem; margin-left: 5px; opacity: 0.5; }
 tr.row-sim td { background-color: rgba(16, 185, 129, 0.12) !important; }
 tr.row-nao td { background-color: rgba(239, 68, 68, 0.12) !important; }
 tr.row-parcial td { background-color: rgba(245, 158, 11, 0.12) !important; }
+
+/* Checkbox Styling */
+.row-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+#select-all-tracking {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--primary);
+}
 
 /* Status Select Colors */
 .status-select {
@@ -510,7 +566,7 @@ input.hide-text::-webkit-datetime-edit {
         display: none !important;
     }
 
-    body.printing-report {
+    body {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         background: #ffffff !important;
@@ -621,14 +677,11 @@ input.hide-text::-webkit-datetime-edit {
     /* Mostrar apenas o termo se NÃO for relatório */
     body:not(.printing-report) #print-area {
         display: block !important;
-        position: fixed;
-        inset: 0;
         background: white;
         color: black;
         font-family: 'Times New Roman', Times, serif;
         padding: 0;
         margin: 0;
-        overflow: hidden;
     }
 
     /* Página do termo */
@@ -641,6 +694,10 @@ input.hide-text::-webkit-datetime-edit {
         font-size: 12pt;
         color: #000;
         line-height: 1.6;
+        page-break-after: always; /* Cada termo em uma nova página */
+    }
+    .termo-page:last-child {
+        page-break-after: auto;
     }
 
     /* Cabeçalho */

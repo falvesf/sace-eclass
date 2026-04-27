@@ -18,7 +18,8 @@ let state = {
     editingTeacherId: null,
     editingSeriesId: null,
     sortConfig: { key: 'nome', direction: 'asc' },
-    activeSystem: 'eclass' // 'eclass' | 'seq_didatica'
+    activeSystem: 'eclass', // 'eclass' | 'seq_didatica'
+    selectedRecords: new Set() // Armazena chaves "teacherId_serie"
 };
 
 // --- System Routing ---
@@ -614,6 +615,118 @@ function toggleSort(key) {
     renderTrackingList(false);
 }
 
+function toggleSelectAll(checked) {
+    const checkboxes = document.querySelectorAll('.row-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = checked;
+        const key = cb.dataset.key;
+        if (checked) state.selectedRecords.add(key);
+        else state.selectedRecords.delete(key);
+    });
+    updatePrintButtonsVisibility();
+}
+
+function updateSelectedState(key, checked) {
+    if (checked) state.selectedRecords.add(key);
+    else state.selectedRecords.delete(key);
+    
+    // Atualiza o "selecionar todos" se necessário
+    const all = document.querySelectorAll('.row-checkbox');
+    const allChecked = Array.from(all).every(cb => cb.checked);
+    const selectAllCb = document.getElementById('select-all-tracking');
+    if (selectAllCb) selectAllCb.checked = allChecked;
+    
+    updatePrintButtonsVisibility();
+}
+
+function updatePrintButtonsVisibility() {
+    const btnSelected = document.getElementById('btn-print-selected');
+    const btnAll = document.getElementById('btn-print-all');
+    
+    const periodValue = document.getElementById('week-selector').value;
+    const periodType = document.getElementById('period-type').value;
+    const key = `${periodType}-${periodValue}`;
+    const tracking = state.tracking[key] || {};
+
+    // Verifica se há registros selecionáveis na seleção atual
+    let hasSelectedPrintable = false;
+    state.selectedRecords.forEach(recordKey => {
+        const track = tracking[recordKey] || { status: 'Pendente' };
+        if (track.status === 'Não fez' || track.status === 'Parcialmente') {
+            hasSelectedPrintable = true;
+        }
+    });
+
+    if (btnSelected) {
+        btnSelected.style.display = (state.selectedRecords.size > 0 && hasSelectedPrintable) ? 'inline-flex' : 'none';
+    }
+
+    // Verifica se há registros imprimíveis visíveis na lista
+    const visibleRows = document.querySelectorAll('.data-table tbody tr:not([style*="display: none"])');
+    let hasVisiblePrintable = false;
+    visibleRows.forEach(row => {
+        if (row.classList.contains('row-nao') || row.classList.contains('row-parcial')) {
+            hasVisiblePrintable = true;
+        }
+    });
+
+    if (btnAll) {
+        if (hasVisiblePrintable) {
+            btnAll.disabled = false;
+            btnAll.style.opacity = '1';
+            btnAll.style.pointerEvents = 'auto';
+        } else {
+            btnAll.disabled = true;
+            btnAll.style.opacity = '0.5';
+            btnAll.style.pointerEvents = 'none';
+        }
+    }
+}
+
+function updateTrackingStats(rowsData) {
+    const statsContainer = document.getElementById('tracking-stats');
+    if (!statsContainer) return;
+
+    const stats = {
+        total: rowsData.length,
+        pendente: 0,
+        sim: 0,
+        nao: 0,
+        parcial: 0
+    };
+
+    rowsData.forEach(row => {
+        const status = (row.status || '').trim();
+        if (status === 'Sim') stats.sim++;
+        else if (status === 'Não fez') stats.nao++;
+        else if (status === 'Parcialmente') stats.parcial++;
+        else stats.pendente++;
+    });
+
+    statsContainer.innerHTML = `
+        <div class="stat-badge total">
+            <span class="count">${stats.total}</span>
+            <span class="label">Total</span>
+        </div>
+        <div class="stat-badge sim">
+            <span class="count">${stats.sim}</span>
+            <span class="label">Sim</span>
+        </div>
+        <div class="stat-badge nao">
+            <span class="count">${stats.nao}</span>
+            <span class="label">Não</span>
+        </div>
+        <div class="stat-badge parcial">
+            <span class="count">${stats.parcial}</span>
+            <span class="label">Parcial</span>
+        </div>
+        <div class="stat-badge pendente">
+            <span class="count">${stats.pendente}</span>
+            <span class="label">Pendente</span>
+        </div>
+    `;
+}
+
 async function renderTrackingList(shouldFetch = true) {
     const periodValue = document.getElementById('week-selector').value;
     const periodType = document.getElementById('period-type').value;
@@ -644,6 +757,10 @@ async function renderTrackingList(shouldFetch = true) {
     if (shouldFetch) {
         await fetchTeachers();
         await fetchTracking(periodType, periodValue);
+        state.selectedRecords.clear(); // Limpa seleção ao trocar período ou buscar
+        const selectAllCb = document.getElementById('select-all-tracking');
+        if (selectAllCb) selectAllCb.checked = false;
+        updatePrintButtonsVisibility();
     }
 
     if (!state.tracking[key]) state.tracking[key] = {};
@@ -683,14 +800,21 @@ async function renderTrackingList(shouldFetch = true) {
     });
 
     list.innerHTML = rowsData.map(row => {
+        const status = (row.status || '').trim();
         let rowClass = '';
-        if (row.status === 'Sim') rowClass = 'row-sim';
-        else if (row.status === 'Não fez') rowClass = 'row-nao';
-        else if (row.status === 'Parcialmente') rowClass = 'row-parcial';
+        if (status === 'Sim') rowClass = 'row-sim';
+        else if (status === 'Não fez') rowClass = 'row-nao';
+        else if (status === 'Parcialmente') rowClass = 'row-parcial';
 
         const safeSerie = row.serie.replace(/\s+/g, '_').replace(/[^\w]/g, '');
+        const recordKey = `${row.id}_${row.serie}`;
+        const isChecked = state.selectedRecords.has(recordKey) ? 'checked' : '';
+        
         return `
             <tr class="${rowClass}" id="row-${row.id}-${safeSerie}">
+                <td style="text-align: center;">
+                    <input type="checkbox" class="row-checkbox" data-key="${recordKey}" ${isChecked} onchange="updateSelectedState('${recordKey}', this.checked)">
+                </td>
                 <td>${row.nome}</td>
                 <td>${row.serie}</td>
                 <td>
@@ -711,7 +835,7 @@ async function renderTrackingList(shouldFetch = true) {
                                onblur="updateTracking('${row.id}', '${row.serie}', null, this.value)"
                                onkeydown="if(event.key === 'Enter') this.blur()">
                         
-                        ${row.status === 'Não fez' ? `
+                        ${(status === 'Não fez' || status === 'Parcialmente') ? `
                             <button class="btn btn-primary" style="padding: 0.2rem 0.6rem; font-size: 0.75rem; width: fit-content;" onclick="printTerm('${row.id}', '${row.serie}')">
                                 Imprimir Termo
                             </button>` : ''}
@@ -722,8 +846,11 @@ async function renderTrackingList(shouldFetch = true) {
     }).join('');
 
     if (rowsData.length === 0) {
-        list.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Nenhum registro encontrado.</td></tr>';
+        list.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Nenhum registro encontrado.</td></tr>';
     }
+
+    updateTrackingStats(rowsData);
+    updatePrintButtonsVisibility();
 }
 
 async function updateTracking(teacherId, serie, status, observacao) {
@@ -771,64 +898,141 @@ async function updateTracking(teacherId, serie, status, observacao) {
 async function printTerm(teacherId, serie) {
     const teacher = state.teachers.find(t => t.id === teacherId);
     const periodValue = document.getElementById('week-selector').value;
+    const periodType = document.getElementById('period-type').value;
+    const key = `${periodType}-${periodValue}`;
+    const cacheId = `${teacherId}_${serie}`;
+    const track = state.tracking[key][cacheId] || { status: 'Pendente', observacao: '' };
 
-    // Load config before printing
-    await loadConfig();
+    const groupedData = [{
+        nome: teacher.nome,
+        items: [`${serie} (${track.status})`]
+    }];
+    
+    await printGroupedTerms(groupedData);
+}
 
-    // Format week period (e.g. "2026-W17") to readable Portuguese
-    let periodoFormatado = periodValue;
-    const weekMatch = periodValue.match(/^(\d{4})-W(\d+)$/);
-    if (weekMatch) {
-        const ano = parseInt(weekMatch[1]);
-        const semana = parseInt(weekMatch[2]);
-        // Find Monday of that ISO week
-        const jan4 = new Date(ano, 0, 4);
-        const startOfWeek = new Date(jan4);
-        startOfWeek.setDate(jan4.getDate() - ((jan4.getDay() || 7) - 1) + (semana - 1) * 7);
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 4);
-        const opts = { day: '2-digit', month: '2-digit', year: 'numeric' };
-        
-        let labelSemana = `Semana ${semana}`;
-        const aw = getAcademicWeek(periodValue);
-        if (aw !== null && aw > 0) {
-            labelSemana = `Semana ${aw}`;
+// --- Grouped Printing ---
+async function printSelectedTerms() {
+    const groupedData = getGroupedData(true);
+    await printGroupedTerms(groupedData);
+}
+
+async function printAllTerms() {
+    const groupedData = getGroupedData(false);
+    await printGroupedTerms(groupedData);
+}
+
+function getGroupedData(onlySelected = false) {
+    const rows = [];
+    const filterProf = document.getElementById('filter-prof').value.toLowerCase();
+    const filterSerie = document.getElementById('filter-serie').value.toLowerCase();
+    const periodValue = document.getElementById('week-selector').value;
+    const periodType = document.getElementById('period-type').value;
+    const key = `${periodType}-${periodValue}`;
+
+    state.teachers.forEach(t => {
+        const sistemas = t.sistemas || ['eclass'];
+        if (!sistemas.includes(state.activeSystem)) return;
+
+        t.series.forEach(serie => {
+            if (filterProf && !t.nome.toLowerCase().includes(filterProf)) return;
+            if (filterSerie && !serie.toLowerCase().includes(filterSerie)) return;
+
+            const recordKey = `${t.id}_${serie}`;
+            if (onlySelected && !state.selectedRecords.has(recordKey)) return;
+
+            const cacheId = `${t.id}_${serie}`;
+            const track = state.tracking[key][cacheId] || { status: 'Pendente', observacao: '' };
+
+            // FILTRO DE STATUS PARA IMPRESSÃO: Apenas "Não fez" ou "Parcialmente"
+            if (track.status !== 'Não fez' && track.status !== 'Parcialmente') return;
+
+            rows.push({
+                teacherId: t.id,
+                nome: t.nome,
+                serie: serie,
+                status: track.status
+            });
+        });
+    });
+
+    // Agrupar por professor
+    const grouped = {};
+    rows.forEach(row => {
+        if (!grouped[row.teacherId]) {
+            grouped[row.teacherId] = {
+                nome: row.nome,
+                items: []
+            };
         }
-        
-        periodoFormatado = `${labelSemana}/${ano} — ${startOfWeek.toLocaleDateString('pt-BR', opts)} a ${endOfWeek.toLocaleDateString('pt-BR', opts)}`;
+        grouped[row.teacherId].items.push(`${row.serie} (${row.status})`);
+    });
+
+    return Object.values(grouped);
+}
+
+async function printGroupedTerms(groupedData) {
+    if (groupedData.length === 0) {
+        alert('Nenhum registro para imprimir.');
+        return;
     }
 
-    // Fill print fields
-    document.getElementById('print-prof-name').textContent = teacher.nome;
-    document.getElementById('print-prof-grades').textContent = serie;
-    document.getElementById('print-week').textContent = periodoFormatado;
-    document.getElementById('print-date').textContent = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
-    document.getElementById('print-prof-sign-name').textContent = teacher.nome;
-    document.getElementById('print-coord-name').textContent = state.user.name;
-    document.getElementById('print-city-uf').textContent = state.config.cidade_uf;
-    // Injeta nome do sistema no termo (cabeçalho e corpo do texto)
-    const sysLabel = getActiveSystemLabel();
-    const sysNameEl = document.getElementById('print-system-name');
-    const sysNameBodyEl = document.getElementById('print-system-name-body');
-    if (sysNameEl) sysNameEl.textContent = sysLabel;
-    if (sysNameBodyEl) sysNameBodyEl.textContent = sysLabel;
+    const printArea = document.getElementById('print-area');
+    const template = document.getElementById('termo-template');
+    printArea.innerHTML = '';
 
-    // Handle coordinator signature image
-    const sigImg = document.getElementById('print-coord-signature');
-    const sigContainer = document.querySelector('.termo-assinatura-imagem-container');
-    if (state.config.assinatura_url) {
-        sigImg.src = state.config.assinatura_url;
-        sigImg.style.display = 'block';
-        sigContainer.style.display = 'flex';
-        sigImg.onload = () => window.print();
-        sigImg.onerror = () => {
+    await loadConfig();
+    const periodValue = document.getElementById('week-selector').value;
+    const periodoFormatado = formatPeriodForDisplay(periodValue);
+    const dataAtual = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const sysLabel = getActiveSystemLabel();
+
+    const sigUrl = state.config.assinatura_url;
+    let imagesToLoad = 0;
+    let loopDone = false;
+
+    groupedData.forEach(group => {
+        const clone = template.content.cloneNode(true);
+        
+        clone.querySelector('.print-prof-name').textContent = group.nome;
+        clone.querySelector('.print-prof-grades').textContent = group.items.join(', ');
+        clone.querySelector('.print-week').textContent = periodoFormatado;
+        clone.querySelector('.print-date').textContent = dataAtual;
+        clone.querySelector('.print-prof-sign-name').textContent = group.nome;
+        clone.querySelector('.print-coord-name').textContent = state.user.name;
+        clone.querySelector('.print-city-uf').textContent = state.config.cidade_uf || 'Sua Cidade - UF';
+        
+        clone.querySelectorAll('.print-system-name').forEach(el => el.textContent = sysLabel);
+        clone.querySelectorAll('.print-system-name-body').forEach(el => el.textContent = sysLabel);
+
+        const sigImg = clone.querySelector('.print-coord-signature');
+        const sigContainer = clone.querySelector('.termo-assinatura-imagem-container');
+        
+        if (sigUrl) {
+            imagesToLoad++;
+            sigImg.onload = () => {
+                imagesToLoad--;
+                if (loopDone && imagesToLoad === 0) window.print();
+            };
+            sigImg.onerror = () => {
+                imagesToLoad--;
+                sigImg.style.display = 'none';
+                sigContainer.style.display = 'none';
+                if (loopDone && imagesToLoad === 0) window.print();
+            };
+            sigImg.src = sigUrl;
+            sigImg.style.display = 'block';
+            sigContainer.style.display = 'flex';
+        } else {
             sigImg.style.display = 'none';
             sigContainer.style.display = 'none';
-            window.print();
-        };
-    } else {
-        sigImg.style.display = 'none';
-        sigContainer.style.display = 'none';
+        }
+
+        printArea.appendChild(clone);
+    });
+
+    loopDone = true;
+    if (imagesToLoad === 0) {
         window.print();
     }
 }
