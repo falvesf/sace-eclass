@@ -1049,39 +1049,52 @@ async function renderReports() {
     const ctxMain = mainCanvas.getContext('2d');
     const ctxTrend = trendCanvas.getContext('2d');
     
-    const periodValue = document.getElementById('week-selector').value;
-    const periodType = document.getElementById('period-type').value;
-    const currentKey = `${periodType}-${periodValue}`;
+    const periodEl = document.getElementById('report-period');
+    const reportPeriodType = periodEl ? periodEl.value : 'weekly';
+    const trendLabels = getTrendLabels(reportPeriodType);
 
-    // 1. Buscar registros existentes do sistema ativo para o gráfico (Geral da semana)
-    const { data: chartTracking, error } = await _supabase
+    // 1. Buscar TODOS os registros do sistema ativo uma única vez para o relatório
+    const { data: allTracking, error } = await _supabase
         .from(getActiveTable())
-        .select('status')
-        .eq('periodo', currentKey);
+        .select('status, periodo, professor_id, serie');
     
-    // 2. Calcular total esperado: apenas professores do sistema ativo
-    let totalExpected = 0;
-    state.teachers.forEach(t => {
-        const sistemas = t.sistemas || ['eclass'];
-        if (t.series && sistemas.includes(state.activeSystem)) totalExpected += t.series.length;
-    });
-
-    const stats = { sim: 0, nao: 0, parcial: 0, pendente: 0 };
-    let totalRecorded = 0;
-
-    if (!error && chartTracking) {
-        chartTracking.forEach(item => {
-            if (item.status === 'Sim') stats.sim++;
-            else if (item.status === 'Não fez') stats.nao++;
-            else if (item.status === 'Parcialmente') stats.parcial++;
-            else stats.pendente++;
-            totalRecorded++;
-        });
+    if (error) {
+        console.error("Erro ao buscar dados para o relatório:", error);
+        return;
     }
 
-    // 3. Pendentes reais = (Já marcados como pendente) + (Quem ainda não tem registro)
+    // 2. Filtrar dados pelo tipo de período selecionado (ex: 'weekly-')
+    const filteredTracking = allTracking.filter(item => item.periodo.startsWith(`${reportPeriodType}-`));
+
+    // 3. Identificar os períodos únicos presentes para cálculo de "Pendente"
+    // Usamos os períodos que realmente têm algum dado, ou se for semanal, podemos considerar as semanas até a atual
+    const uniquePeriods = [...new Set(filteredTracking.map(item => item.periodo))];
+    const numPeriods = Math.max(1, uniquePeriods.length);
+
+    // 4. Calcular totais para o Gráfico de Visão Geral (Doughnut)
+    let totalSeriesPerTeacher = 0;
+    state.teachers.forEach(t => {
+        const sistemas = t.sistemas || ['eclass'];
+        if (t.series && sistemas.includes(state.activeSystem)) {
+            totalSeriesPerTeacher += t.series.length;
+        }
+    });
+
+    const totalExpected = totalSeriesPerTeacher * numPeriods;
+    const stats = { sim: 0, nao: 0, parcial: 0, pendente: 0 };
+    let totalRecorded = filteredTracking.length;
+
+    filteredTracking.forEach(item => {
+        if (item.status === 'Sim') stats.sim++;
+        else if (item.status === 'Não fez') stats.nao++;
+        else if (item.status === 'Parcialmente') stats.parcial++;
+        else stats.pendente++;
+    });
+
+    // Pendentes = (Pendentes explícitos) + (Omissões/Não lançados em todos os períodos detectados)
     stats.pendente += (totalExpected - totalRecorded);
 
+    // Renderizar Doughnut
     if (mainChart) mainChart.destroy();
     mainChart = new Chart(ctxMain, {
         type: 'doughnut',
@@ -1110,67 +1123,42 @@ async function renderReports() {
         }
     });
 
+    // 5. Calcular Tendência (Line Chart)
     if (trendChart) trendChart.destroy();
-
-    const periodEl = document.getElementById('report-period');
-    const reportPeriodType = periodEl ? periodEl.value : 'weekly';
-    const trendLabels = getTrendLabels(reportPeriodType);
-
-    // 1. Calcular Dados de Tendência Reais
     let trendData = [];
     try {
-        // Buscar todos os registros do sistema ativo
-        const { data: trendRaw } = await _supabase
-            .from(getActiveTable())
-            .select('status, periodo');
+        const expectedPerPeriod = totalSeriesPerTeacher;
+        
+        // Agrupar dados por período para a tendência
+        const periodStatsMap = {};
+        filteredTracking.forEach(item => {
+            if (!periodStatsMap[item.periodo]) {
+                periodStatsMap[item.periodo] = { ok: 0 };
+            }
+            if (item.status === 'Sim' || item.status === 'Parcialmente') {
+                periodStatsMap[item.periodo].ok++;
+            }
+        });
 
-        if (trendRaw) {
-            // Calcular total de envios esperados por período (professores ativos no sistema)
-            let expectedPerPeriod = 0;
-            state.teachers.forEach(t => {
-                const sistemas = t.sistemas || ['eclass'];
-                if (t.series && sistemas.includes(state.activeSystem)) {
-                    expectedPerPeriod += t.series.length;
-                }
-            });
+        const currentYear = new Date().getFullYear();
+        trendData = trendLabels.map(label => {
+            let searchKey = '';
+            if (reportPeriodType === 'weekly') {
+                const num = label.match(/\d+/);
+                if (num) searchKey = `weekly-${currentYear}-W${num[0].padStart(2, '0')}`;
+            } else if (reportPeriodType === 'daily') {
+                searchKey = `daily-${label.toLowerCase()}`;
+            } else if (reportPeriodType === 'monthly') {
+                const months = { 'Jan': 0, 'Fev': 1, 'Mar': 2, 'Abr': 3, 'Mai': 4, 'Jun': 5 };
+                if (months[label] !== undefined) searchKey = `monthly-${currentYear}-${String(months[label] + 1).padStart(2, '0')}`;
+            } else {
+                searchKey = `${reportPeriodType}-${label.toLowerCase()}`;
+            }
 
-            // Agrupar dados por período
-            const periodStats = {};
-            trendRaw.forEach(item => {
-                if (!periodStats[item.periodo]) {
-                    periodStats[item.periodo] = { ok: 0, total: 0 };
-                }
-                if (item.status === 'Sim' || item.status === 'Parcialmente') {
-                    periodStats[item.periodo].ok++;
-                }
-            });
-
-            // Gerar chaves de período baseadas nas labels da tendência
-            // Para simplificar, usaremos o ano atual e as labels para buscar correspondência
-            const currentYear = new Date().getFullYear();
-            
-            trendData = trendLabels.map(label => {
-                let searchKey = '';
-                if (reportPeriodType === 'weekly') {
-                    // Tenta converter "Sem X" para "2026-WXX"
-                    const num = label.match(/\d+/);
-                    if (num) searchKey = `weekly-${currentYear}-W${num[0].padStart(2, '0')}`;
-                } else if (reportPeriodType === 'daily') {
-                    // Simplificação: apenas busca correspondência direta no tipo
-                    searchKey = `daily-${label.toLowerCase()}`;
-                } else if (reportPeriodType === 'monthly') {
-                    // Mapeia meses
-                    const months = { 'Jan': 0, 'Fev': 1, 'Mar': 2, 'Abr': 3, 'Mai': 4, 'Jun': 5 };
-                    if (months[label] !== undefined) searchKey = `monthly-${currentYear}-${String(months[label] + 1).padStart(2, '0')}`;
-                } else {
-                    searchKey = `${reportPeriodType}-${label.toLowerCase()}`;
-                }
-
-                const stats = periodStats[searchKey];
-                if (!stats || expectedPerPeriod === 0) return 0;
-                return Math.round((stats.ok / expectedPerPeriod) * 100);
-            });
-        }
+            const pStats = periodStatsMap[searchKey];
+            if (!pStats || expectedPerPeriod === 0) return 0;
+            return Math.round((pStats.ok / expectedPerPeriod) * 100);
+        });
     } catch (e) {
         console.error("Erro ao calcular tendência:", e);
         trendData = trendLabels.map(() => 0);
@@ -1201,12 +1189,7 @@ async function renderReports() {
         }
     });
 
-    // 4. Buscar e renderizar listagem de professores por status baseada no combobox do relatório
-    const { data: listTracking, error: listError } = await _supabase
-        .from(getActiveTable())
-        .select('professor_id, serie, status, periodo')
-        .like('periodo', `${reportPeriodType}-%`);
-
+    // 6. Preparar listagem de professores por status
     const teacherMap = {};
     state.teachers.forEach(t => teacherMap[t.id] = t);
 
@@ -1214,46 +1197,53 @@ async function renderReports() {
     const listTotals = { 'Sim': 0, 'Não fez': 0, 'Parcialmente': 0, 'Pendente': 0 };
     const grouped = { 'Sim': {}, 'Não fez': {}, 'Parcialmente': {}, 'Pendente': {} };
 
-    if (!listError && listTracking) {
-        listTracking.sort((a, b) => b.periodo.localeCompare(a.periodo));
+    // Usamos filteredTracking que já contém os dados necessários
+    filteredTracking.sort((a, b) => b.periodo.localeCompare(a.periodo));
 
-        listTracking.forEach(item => {
-            const prof = teacherMap[item.professor_id];
-            const sistemas = prof ? (prof.sistemas || ['eclass']) : [];
-            if (!prof || !sistemas.includes(state.activeSystem)) return;
+    filteredTracking.forEach(item => {
+        const prof = teacherMap[item.professor_id];
+        const sistemas = prof ? (prof.sistemas || ['eclass']) : [];
+        if (!prof || !sistemas.includes(state.activeSystem)) return;
 
-            const statusKey = grouped[item.status] ? item.status : 'Pendente';
-            const statusGroup = grouped[statusKey];
+        const statusKey = grouped[item.status] ? item.status : 'Pendente';
+        const statusGroup = grouped[statusKey];
+        
+        if (!statusGroup[prof.id]) {
+            statusGroup[prof.id] = { nome: prof.nome, count: 0, details: [] };
+        }
+        statusGroup[prof.id].count++;
+        statusGroup[prof.id].details.push(`${item.serie} | ${item.periodo.replace(reportPeriodType+'-', '')}`);
+        listTotals[statusKey]++;
+    });
+
+    // IMPORTANTE: Adicionar quem não tem NENHUM registro no período como Pendente
+    // Porém, em relatórios agregados, isso é complexo. 
+    // Vamos manter apenas quem tem registro explícito de pendência ou o total do doughnut reflete a omissão.
+    // O usuário disse: "gráfico... aparece só com os dados Pendentes e os cards... aparecem com outros dados"
+    // Isso sugere que o Doughnut deve bater com os cards.
+    // Então para o Doughnut bater com os cards em termos de Sim/Não/Parcial, 
+    // a base deve ser a mesma. O "Pendente" do doughnut incluirá as omissões.
+
+    Object.keys(grouped).forEach(status => {
+        const profs = Object.values(grouped[status]);
+        profs.sort((a, b) => a.nome.localeCompare(b.nome));
+        
+        profs.forEach(p => {
+            const badge = p.count > 1 ? `<span style="background: rgba(255,255,255,0.1); color: var(--text-main); padding: 2px 6px; border-radius: 12px; font-size: 0.75rem; margin-left: 8px;">${p.count}</span>` : '';
+            const detailsHtml = p.details.map(d => {
+                const [serie, periodPart] = d.split(' | ');
+                return `<div>${serie} | ${formatPeriodForDisplay(periodPart)}</div>`;
+            }).join('');
             
-            if (!statusGroup[prof.id]) {
-                statusGroup[prof.id] = { nome: prof.nome, count: 0, details: [] };
-            }
-            statusGroup[prof.id].count++;
-            statusGroup[prof.id].details.push(`${item.serie} | ${item.periodo.replace(reportPeriodType+'-', '')}`);
-            listTotals[statusKey]++;
+            const html = `
+                <div style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <div style="font-weight: 600; font-size: 0.9rem; display: flex; align-items: center;">${p.nome} ${badge}</div>
+                    <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px;">${detailsHtml}</div>
+                </div>
+            `;
+            listHtml[status].push(html);
         });
-
-        Object.keys(grouped).forEach(status => {
-            const profs = Object.values(grouped[status]);
-            profs.sort((a, b) => a.nome.localeCompare(b.nome));
-            
-            profs.forEach(p => {
-                const badge = p.count > 1 ? `<span style="background: rgba(255,255,255,0.1); color: var(--text-main); padding: 2px 6px; border-radius: 12px; font-size: 0.75rem; margin-left: 8px;">${p.count}</span>` : '';
-                const detailsHtml = p.details.map(d => {
-                    const [serie, periodPart] = d.split(' | ');
-                    return `<div>${serie} | ${formatPeriodForDisplay(periodPart)}</div>`;
-                }).join('');
-                
-                const html = `
-                    <div style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <div style="font-weight: 600; font-size: 0.9rem; display: flex; align-items: center;">${p.nome} ${badge}</div>
-                        <div style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px;">${detailsHtml}</div>
-                    </div>
-                `;
-                listHtml[status].push(html);
-            });
-        });
-    }
+    });
 
     const container = document.getElementById('report-teacher-list');
     if (container) {
@@ -1620,3 +1610,39 @@ const reportPeriodEl = document.getElementById('report-period');
 if (periodTypeEl) periodTypeEl.addEventListener('change', () => { updatePeriodSelector(); renderTrackingList(); });
 if (weekSelectorEl) weekSelectorEl.addEventListener('change', () => renderTrackingList());
 if (reportPeriodEl) reportPeriodEl.addEventListener('change', renderReports);
+
+// --- Easter Egg ---
+let logoClicks = 0;
+let logoClickTimeout;
+
+function handleLogoClick() {
+    logoClicks++;
+    clearTimeout(logoClickTimeout);
+    
+    if (logoClicks === 3) {
+        openCredits();
+        logoClicks = 0;
+    } else {
+        logoClickTimeout = setTimeout(() => {
+            logoClicks = 0;
+        }, 1000); // 1 segundo para clicar 3 vezes
+    }
+}
+
+function openCredits() {
+    const screen = document.getElementById('credits-screen');
+    if (screen) {
+        screen.style.display = 'flex';
+        // Impede scroll do body
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeCredits() {
+    const screen = document.getElementById('credits-screen');
+    if (screen) {
+        screen.style.display = 'none';
+        // Restaura scroll do body
+        document.body.style.overflow = 'auto';
+    }
+}

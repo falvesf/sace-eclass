@@ -45,8 +45,8 @@
         <header>
             <div class="logo">
                 <h2 style="display: flex; align-items: center; gap: 10px;">
-                    <div
-                        style="background: var(--primary); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem;">
+                    <div id="sace-logo" onclick="handleLogoClick()"
+                        style="background: var(--primary); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; user-select: none;">
                         E</div>
                     SACE
                 </h2>
@@ -490,6 +490,30 @@
             </div>
         </div>
     </template>
+
+    <!-- Credits Screen (Easter Egg) -->
+    <div id="credits-screen" class="credits-overlay" onclick="closeCredits()">
+        <div class="credits-content">
+            <div class="credits-logo">E</div>
+            <h1>SACE</h1>
+            <p class="credits-version">Versão 1.0.0</p>
+            
+            <div class="credits-section">
+                <p class="credits-label">Idealizador</p>
+                <p class="credits-name">Fabio Alves Feitoza</p>
+            </div>
+            
+            <div class="credits-section">
+                <p class="credits-label">Desenvolvido por</p>
+                <p class="credits-name developer-name">Antigravity</p>
+                <p class="credits-sub">Agentes Gemini & Claude</p>
+            </div>
+
+            <div class="credits-footer">
+                <p>© 2026 Sistema de Controle e Acompanhamento E-Class</p>
+            </div>
+        </div>
+    </div>
 
     <script src="main.js"></script>
 </body>
