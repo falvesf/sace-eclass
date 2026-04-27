@@ -1,3 +1,17 @@
+/**
+ * SACE - Sistema de Controle e Acompanhamento E-Class
+ * Logic: Fabio Alves Feitoza & Antigravity (Gemini/Claude)
+ */
+
+// Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('SACE: Service Worker registrado com sucesso.'))
+            .catch(err => console.error('SACE: Erro ao registrar Service Worker:', err));
+    });
+}
+
 // --- Supabase Configuration ---
 const SUPABASE_URL = 'https://qqnckvemoetdbimrofrm.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_9Ys3sLag7RRkVjkMBG7uHQ_hq4bNURE';
