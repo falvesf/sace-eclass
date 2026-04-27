@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SACE - E-Class Control</title>
+    <title>SACE - Controle de Sistemas Educacionais</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -23,7 +23,7 @@
     <div id="auth-overlay">
         <div class="auth-card">
             <h1>SACE</h1>
-            <p style="color: var(--text-muted); margin-bottom: 2rem;">Acesse o Sistema de Controle E-Class</p>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">Acesse o Controle de Sistemas Educacionais</p>
             <div id="g_id_onload"
                 data-client_id="171306088337-n4jpqlb4n3a9656c3b96bu5lq2arhfbt.apps.googleusercontent.com"
                 data-callback="handleCredentialResponse"></div>
@@ -37,8 +37,7 @@
                 </div>
                 <div class="form-group">
                     <select id="login-role">
-                        <option value="Coordenador">Coordenador</option>
-                        <option value="Diretor">Diretor</option>
+                        <option value="Coordenador">Professor</option>
                     </select>
                 </div>
                 <button class="btn btn-primary" style="width: 100%;" onclick="internalLogin()">Entrar</button>
@@ -119,10 +118,11 @@
             <!-- Tracking -->
             <section id="section-tracking" class="section">
                 <div class="sticky-wrapper">
-                    <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap;">
+                    <div class="section-header"
+                        style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap;">
                         <div>
                             <h1 id="tracking-section-title">Acompanhamento Semanal</h1>
-                            <p class="subtitle" id="tracking-subtitle">Controle de preenchimento do sistema E-Class</p>
+                            <p class="subtitle" id="tracking-subtitle">Acompanhamento do sistema E-Class</p>
                         </div>
                         <div id="tracking-stats" class="stats-summary">
                             <!-- JS will populate this -->
@@ -150,10 +150,13 @@
                         </select>
                         <div style="position: relative; flex: 1; min-width: 150px; display: flex;">
                             <input type="week" id="week-selector" style="width: 100%;">
-                            <span id="academic-week-label" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; font-weight: 500; color: white; pointer-events: none; display: none;"></span>
+                            <span id="academic-week-label"
+                                style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; font-weight: 500; color: white; pointer-events: none; display: none;"></span>
                         </div>
                         <div class="print-actions" style="display: flex; gap: 10px;">
-                            <button id="btn-print-selected" class="btn" style="display: none; background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);" onclick="printSelectedTerms()">
+                            <button id="btn-print-selected" class="btn"
+                                style="display: none; background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);"
+                                onclick="printSelectedTerms()">
                                 <i class="fas fa-print"></i> Da Seleção
                             </button>
                             <button id="btn-print-all" class="btn btn-primary" onclick="printAllTerms()">
@@ -167,7 +170,8 @@
                         <thead>
                             <tr>
                                 <th style="width: 40px; text-align: center;">
-                                    <input type="checkbox" id="select-all-tracking" onclick="toggleSelectAll(this.checked)">
+                                    <input type="checkbox" id="select-all-tracking"
+                                        onclick="toggleSelectAll(this.checked)">
                                 </th>
                                 <th onclick="toggleSort('nome')" class="sortable">Professor <i class="fas fa-sort"></i>
                                 </th>
@@ -214,20 +218,25 @@
                     <div class="section-header"
                         style="width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h1>Gerenciamento de Séries</h1>
-                        <button class="btn btn-primary" onclick="openSeriesModal()"><i class="fas fa-plus"></i> Nova Série</button>
+                        <button class="btn btn-primary" onclick="openSeriesModal()"><i class="fas fa-plus"></i> Nova
+                            Série</button>
                     </div>
 
                     <!-- Gerenciamento de Turmas (Inline) -->
-                    <div class="card" style="width: 100%; max-width: 800px; padding: 1.5rem; margin-bottom: 2rem; border-top: 4px solid var(--primary);">
-                        <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem;"><i class="fas fa-layer-group"></i> Gerenciar Turmas</h2>
-                        <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem;">Crie categorias para agrupar suas séries (ex: Fundamental I).</p>
-                        
+                    <div class="card"
+                        style="width: 100%; max-width: 800px; padding: 1.5rem; margin-bottom: 2rem; border-top: 4px solid var(--primary);">
+                        <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem;"><i class="fas fa-layer-group"></i>
+                            Gerenciar Turmas</h2>
+                        <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem;">Crie categorias
+                            para agrupar suas séries (ex: Fundamental I).</p>
+
                         <div style="display: flex; gap: 10px; margin-bottom: 1.5rem; max-width: 500px;">
                             <input type="text" id="new-segment-name" placeholder="Nome da nova turma...">
                             <button class="btn btn-primary" onclick="saveSegment()">Adicionar</button>
                         </div>
 
-                        <div class="card table-card" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border);">
+                        <div class="card table-card"
+                            style="background: rgba(0,0,0,0.2); border: 1px solid var(--border);">
                             <table class="data-table">
                                 <thead>
                                     <tr>
@@ -251,7 +260,8 @@
                 <div class="section-header" style="flex-wrap: wrap; gap: 10px;">
                     <h1 id="report-section-title">Relatórios</h1>
                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <button class="btn btn-primary" id="btn-print-report" onclick="printReport()"><i class="fas fa-print"></i> Imprimir</button>
+                        <button class="btn btn-primary" id="btn-print-report" onclick="printReport()"><i
+                                class="fas fa-print"></i> Imprimir</button>
                         <select id="report-period" style="width: auto;" onchange="renderReports()">
                             <option value="daily">Diário</option>
                             <option value="weekly" selected>Semanal</option>
@@ -275,7 +285,7 @@
                     </div>
                 </div>
                 <div id="report-teacher-list" style="margin-top: 2rem;"></div>
-                
+
                 <div id="report-print-table-container" class="print-only-report"></div>
             </section>
 
@@ -411,7 +421,8 @@
     <div id="series-modal-container" style="display: none;">
         <div class="card modal">
             <h2 id="series-modal-title">Nova Série</h2>
-            <div class="form-group"><label>Nome da Série</label><input type="text" id="series-name" placeholder="Ex: 1º ano A"></div>
+            <div class="form-group"><label>Nome da Série</label><input type="text" id="series-name"
+                    placeholder="Ex: 1º ano A"></div>
             <div class="form-group">
                 <label>Turma / Segmento</label>
                 <select id="series-segment"></select>
@@ -443,7 +454,8 @@
             <div class="termo-corpo">
                 <p>
                     Pelo presente termo, declaro estar ciente de que <strong>não realizei o preenchimento</strong>
-                    do Diário Digital (Sistema <span class="print-system-name-body">E-Class</span>) referente à(s) série(s)
+                    do Diário Digital (Sistema <span class="print-system-name-body">E-Class</span>) referente à(s)
+                    série(s)
                     e período indicados abaixo,
                     em conformidade com as orientações da coordenação pedagógica.
                 </p>
@@ -502,12 +514,12 @@
             <div class="credits-logo">E</div>
             <h1>SACE</h1>
             <p class="credits-version">Versão 1.0.0</p>
-            
+
             <div class="credits-section">
                 <p class="credits-label">Idealizador</p>
                 <p class="credits-name">Fabio Alves Feitoza</p>
             </div>
-            
+
             <div class="credits-section">
                 <p class="credits-label">Desenvolvido por</p>
                 <p class="credits-name developer-name">Antigravity</p>
@@ -515,7 +527,7 @@
             </div>
 
             <div class="credits-footer">
-                <p>© 2026 Sistema de Controle e Acompanhamento E-Class</p>
+                <p>© 2026 Controle de Sistemas Educacionais</p>
             </div>
         </div>
     </div>

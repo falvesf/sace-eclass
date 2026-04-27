@@ -1,6 +1,7 @@
 /**
- * SACE - Sistema de Controle e Acompanhamento E-Class
- * Logic: Fabio Alves Feitoza & Antigravity (Gemini/Claude)
+ * SACE - Controle de Sistemas Educacionais
+ * Idealizador: Fabio Alves Feitoza
+ * Desenvolvido por: Antigravity (Gemini/Claude)
  */
 
 // Register Service Worker for PWA
@@ -56,7 +57,7 @@ async function switchSystem(system) {
 
     // Atualiza subtítulo
     const sub = document.getElementById('tracking-subtitle');
-    if (sub) sub.textContent = `Controle de preenchimento do sistema ${getActiveSystemLabel()}`;
+    if (sub) sub.textContent = `Acompanhamento do sistema ${getActiveSystemLabel()}`;
 
     if (state.currentSection === 'tracking') {
         await renderTrackingList(true);
