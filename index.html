@@ -366,6 +366,17 @@
                                 </div>
                             </div>
 
+                            <!-- Ajuste de tamanho da assinatura -->
+                            <div id="signature-size-container" style="display: none; margin-top: 1rem; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px; border: 1px solid var(--border);">
+                                <label style="display: block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px;">
+                                    Tamanho da Assinatura no Termo
+                                </label>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <input type="range" id="config-assinatura-tamanho" min="30" max="120" value="60" style="flex: 1;" oninput="updateSignatureSizeLabel(this.value)">
+                                    <span id="signature-size-label" style="font-size: 0.8rem; font-weight: bold; min-width: 40px;">60px</span>
+                                </div>
+                            </div>
+
                             <button class="btn" style="width: 100%;"
                                 onclick="document.getElementById('signature-upload').click()">
                                 <i class="fas fa-upload"></i> Subir Imagem

@@ -321,8 +321,31 @@ async function loadConfig() {
     if (state.config.assinatura_url && previewImg && previewContainer) {
         previewImg.src = state.config.assinatura_url;
         previewContainer.style.display = 'block';
+        
+        // Mostrar ajuste de tamanho se tiver assinatura
+        const sizeContainer = document.getElementById('signature-size-container');
+        const sizeInput = document.getElementById('config-assinatura-tamanho');
+        if (sizeContainer) sizeContainer.style.display = 'block';
+        if (sizeInput) {
+            const val = state.config.assinatura_tamanho || 60;
+            sizeInput.value = val;
+            updateSignatureSizeLabel(val);
+        }
     } else if (previewContainer) {
         previewContainer.style.display = 'none';
+        const sizeContainer = document.getElementById('signature-size-container');
+        if (sizeContainer) sizeContainer.style.display = 'none';
+    }
+}
+
+function updateSignatureSizeLabel(val) {
+    const label = document.getElementById('signature-size-label');
+    if (label) label.textContent = val + 'px';
+    
+    // Atualiza o preview em tempo real para dar feedback visual
+    const previewImg = document.getElementById('signature-preview');
+    if (previewImg) {
+        previewImg.style.maxHeight = val + 'px';
     }
 }
 
@@ -382,7 +405,8 @@ async function saveConfig(silent = false) {
 
     const updates = [
         { chave: 'cidade_uf', valor: cidade_uf, usuario },
-        { chave: 'assinatura_url', valor: state.config.assinatura_url || '', usuario }
+        { chave: 'assinatura_url', valor: state.config.assinatura_url || '', usuario },
+        { chave: 'assinatura_tamanho', valor: document.getElementById('config-assinatura-tamanho')?.value || 60, usuario }
     ];
 
     if (ano_inicio !== undefined) updates.push({ chave: 'ano_inicio', valor: ano_inicio, usuario: 'global' });
@@ -1001,6 +1025,10 @@ async function printGroupedTerms(groupedData) {
     const periodoFormatado = formatPeriodForDisplay(periodValue);
     const dataAtual = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
     const sysLabel = getActiveSystemLabel();
+    
+    // Aplicar tamanho da assinatura via CSS Variable
+    const sigHeight = state.config.assinatura_tamanho || 60;
+    document.documentElement.style.setProperty('--sig-height', sigHeight + 'px');
 
     const sigUrl = state.config.assinatura_url;
     let imagesToLoad = 0;
