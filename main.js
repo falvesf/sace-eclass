@@ -1254,8 +1254,23 @@ async function renderReports() {
         return;
     }
 
-    // 2. Filtrar dados pelos períodos retroativos calculados usando range de datas
+    // 2. Filtrar dados pelos períodos retroativos calculados
     const filteredTracking = allTracking.filter(item => {
+        // Regra Especial: Diário e Semanal mostram apenas seus próprios tipos (Estrito)
+        if (reportPeriodType === 'daily') {
+            return item.periodo.startsWith('daily-') && retroactivePeriods.some(p => {
+                const itemRange = parsePeriodToRange(item.periodo);
+                return itemRange && itemRange.start.getTime() <= p.dateRange.end.getTime() && itemRange.end.getTime() >= p.dateRange.start.getTime();
+            });
+        }
+        if (reportPeriodType === 'weekly') {
+            return item.periodo.startsWith('weekly-') && retroactivePeriods.some(p => {
+                const itemRange = parsePeriodToRange(item.periodo);
+                return itemRange && itemRange.start.getTime() <= p.dateRange.end.getTime() && itemRange.end.getTime() >= p.dateRange.start.getTime();
+            });
+        }
+
+        // Demais períodos: Agregação total (Daily + Weekly + ...)
         const itemRange = parsePeriodToRange(item.periodo);
         if (!itemRange) return false;
 
@@ -1265,7 +1280,6 @@ async function renderReports() {
         return retroactivePeriods.some(p => {
             const pStart = p.dateRange.start.getTime();
             const pEnd = p.dateRange.end.getTime();
-            // Verifica sobreposição de datas: (StartA <= EndB) e (EndA >= StartB)
             return itemStart <= pEnd && itemEnd >= pStart;
         });
     });
