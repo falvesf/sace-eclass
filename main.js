@@ -425,6 +425,34 @@ async function saveConfig(silent = false) {
 }
 
 // --- Teacher Management ---
+async function fetchSegmentos() {
+    const { data, error } = await _supabase
+        .from('segmentos')
+        .select('*')
+        .order('ordem', { ascending: true });
+    
+    if (error) console.error('Error fetching segments:', error);
+    else {
+        state.segmentos = data;
+        populateTurmaFilter();
+    }
+}
+
+function populateTurmaFilter() {
+    const filter = document.getElementById('filter-turma');
+    if (!filter) return;
+    
+    const current = filter.value;
+    filter.innerHTML = '<option value="">Todas as Turmas</option>';
+    state.segmentos.forEach(seg => {
+        const opt = document.createElement('option');
+        opt.value = seg.id;
+        opt.textContent = seg.nome;
+        filter.appendChild(opt);
+    });
+    filter.value = current;
+}
+
 async function fetchTeachers() {
     const { data, error } = await _supabase
         .from('professores')
@@ -771,6 +799,7 @@ async function renderTrackingList(shouldFetch = true) {
     const periodValue = document.getElementById('week-selector').value;
     const periodType = document.getElementById('period-type').value;
     const filterProf = document.getElementById('filter-prof').value.toLowerCase();
+    const filterTurma = document.getElementById('filter-turma').value;
     const filterSerie = document.getElementById('filter-serie').value.toLowerCase();
     const key = `${periodType}-${periodValue}`;
     
@@ -817,6 +846,11 @@ async function renderTrackingList(shouldFetch = true) {
         t.series.forEach(serie => {
             if (filterProf && !t.nome.toLowerCase().includes(filterProf)) return;
             if (filterSerie && !serie.toLowerCase().includes(filterSerie)) return;
+            
+            if (filterTurma) {
+                const sObj = state.series.find(s => s.nome === serie);
+                if (!sObj || String(sObj.segmento_id) !== filterTurma) return;
+            }
 
             const cacheId = `${t.id}_${serie}`;
             const track = state.tracking[key][cacheId] || { status: 'Pendente', observacao: '' };
@@ -1621,12 +1655,6 @@ function getTrendLabels(type) {
     return periods.map(p => p.label);
 }
 
-// --- Segmentos Management ---
-async function fetchSegmentos() {
-    const { data, error } = await _supabase.from('segmentos').select('*').order('ordem', { ascending: true });
-    if (error) console.error('Error fetching segmentos:', error);
-    else state.segmentos = data;
-}
 
 async function saveSegment() {
     const nome = document.getElementById('new-segment-name').value.trim();

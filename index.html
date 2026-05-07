@@ -140,6 +140,9 @@
                     <div class="filter-bar">
                         <input type="text" id="filter-prof" placeholder="Buscar Professor..."
                             oninput="renderTrackingList(false)">
+                        <select id="filter-turma" onchange="renderTrackingList(false)">
+                            <option value="">Todas as Turmas</option>
+                        </select>
                         <input type="text" id="filter-serie" placeholder="Buscar Série..."
                             oninput="renderTrackingList(false)">
                         <select id="period-type">
