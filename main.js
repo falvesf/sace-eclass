@@ -63,10 +63,6 @@ async function switchSystem(system) {
     if (state.currentSection === 'tracking') {
         await renderTrackingList(true);
     } else if (state.currentSection === 'reports') {
-        const titleEl = document.getElementById('report-section-title');
-        if (titleEl) {
-            titleEl.textContent = `Relatórios - ${getActiveSystemLabel()}`;
-        }
         await renderReports();
     }
 }
@@ -1267,6 +1263,13 @@ async function renderReports() {
     
     const periodEl = document.getElementById('report-period');
     const reportPeriodType = periodEl ? periodEl.value : 'weekly';
+    
+    // Atualizar título do relatório com o sistema e período
+    const titleEl = document.getElementById('report-section-title');
+    if (titleEl && periodEl) {
+        const periodText = periodEl.options[periodEl.selectedIndex].text;
+        titleEl.textContent = `Relatórios - ${getActiveSystemLabel()} - ${periodText}`;
+    }
     
     // Configurar quantidade de períodos na tendência
     let periodCount = 4;
