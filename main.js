@@ -2,6 +2,7 @@
  * SACE - Controle de Sistemas Educacionais
  * Idealizador: Fabio Alves Feitoza
  * Desenvolvido por: Antigravity (Gemini/Claude)
+ * Version: 1.6.2.5 - Retroactive Reports Fix
  */
 
 // Register Service Worker for PWA
@@ -1084,6 +1085,144 @@ async function printGroupedTerms(groupedData) {
 let mainChart = null;
 let trendChart = null;
 
+function parsePeriodToRange(key) {
+    if (!key) return null;
+    const parts = key.split('-');
+    if (parts.length < 2) return null;
+
+    const type = parts[0];
+    try {
+        if (type === 'daily' || type === 'fortnightly') {
+            const y = parseInt(parts[1]);
+            const m = parseInt(parts[2]) - 1;
+            const d = parseInt(parts[3]);
+            const start = new Date(Date.UTC(y, m, d, 0, 0, 0));
+            const end = new Date(Date.UTC(y, m, d, 23, 59, 59, 999));
+            return { start, end };
+        }
+        if (type === 'weekly') {
+            const year = parseInt(parts[1]);
+            const week = parseInt(parts[2].substring(1));
+            const jan4 = new Date(Date.UTC(year, 0, 4));
+            const start = new Date(jan4);
+            start.setUTCDate(jan4.getUTCDate() - ((jan4.getUTCDay() || 7) - 1) + (week - 1) * 7);
+            start.setUTCHours(0, 0, 0, 0);
+            const end = new Date(start);
+            end.setUTCDate(start.getUTCDate() + 6);
+            end.setUTCHours(23, 59, 59, 999);
+            return { start, end };
+        }
+        if (type === 'monthly') {
+            const year = parseInt(parts[1]);
+            const month = parseInt(parts[2]) - 1;
+            const start = new Date(Date.UTC(year, month, 1, 0, 0, 0));
+            const end = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
+            return { start, end };
+        }
+        if (type === 'bimestral' || type === 'trimestral' || type === 'semestral') {
+            const year = parseInt(parts[1]);
+            const val = parseInt(parts[2].substring(1));
+            const monthsPerPeriod = type === 'bimestral' ? 2 : (type === 'trimestral' ? 3 : 6);
+            const start = new Date(Date.UTC(year, (val - 1) * monthsPerPeriod, 1, 0, 0, 0));
+            const end = new Date(Date.UTC(year, val * monthsPerPeriod, 0, 23, 59, 59, 999));
+            return { start, end };
+        }
+        if (type === 'anual') {
+            const year = parseInt(parts[1]);
+            const start = new Date(Date.UTC(year, 0, 1, 0, 0, 0));
+            const end = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
+            return { start, end };
+        }
+    } catch (e) { console.error("Erro parsePeriod:", e); }
+    return null;
+}
+
+function getRetroactivePeriods(type, count = 4) {
+    const periods = [];
+    const now = new Date();
+    const utcNow = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0));
+
+    for (let i = 0; i < count; i++) {
+        let label = '';
+        let dateRange = { start: null, end: null };
+
+        switch (type) {
+            case 'daily':
+                const d = new Date(utcNow);
+                d.setUTCDate(utcNow.getUTCDate() - i);
+                label = i === 0 ? 'Hoje' : d.toLocaleDateString('pt-BR', { weekday: 'short', timeZone: 'UTC' });
+                dateRange.start = new Date(d); dateRange.start.setUTCHours(0,0,0,0);
+                dateRange.end = new Date(d); dateRange.end.setUTCHours(23,59,59,999);
+                break;
+            case 'weekly':
+                const wDate = new Date(utcNow);
+                wDate.setUTCDate(utcNow.getUTCDate() - (i * 7));
+                const weekNum = getWeekNumber(wDate);
+                const jan4 = new Date(Date.UTC(wDate.getUTCFullYear(), 0, 4));
+                const wStart = new Date(jan4);
+                wStart.setUTCDate(jan4.getUTCDate() - ((jan4.getUTCDay() || 7) - 1) + (weekNum - 1) * 7);
+                wStart.setUTCHours(0,0,0,0);
+                const wEnd = new Date(wStart);
+                wEnd.setUTCDate(wStart.getUTCDate() + 6);
+                wEnd.setUTCHours(23,59,59,999);
+                
+                const aw = getAcademicWeek(`${wDate.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`);
+                label = i === 0 ? 'Sem Atual' : (aw ? `Sem Letiva ${aw}` : `Sem ${weekNum}`);
+                dateRange = { start: wStart, end: wEnd };
+                break;
+            case 'fortnightly':
+                const fDate = new Date(utcNow);
+                fDate.setUTCDate(utcNow.getUTCDate() - (i * 15));
+                const isSecondHalf = fDate.getUTCDate() > 15;
+                const fStart = new Date(Date.UTC(fDate.getUTCFullYear(), fDate.getUTCMonth(), isSecondHalf ? 16 : 1));
+                const fEnd = isSecondHalf 
+                    ? new Date(Date.UTC(fDate.getUTCFullYear(), fDate.getUTCMonth() + 1, 0, 23, 59, 59, 999))
+                    : new Date(Date.UTC(fDate.getUTCFullYear(), fDate.getUTCMonth(), 15, 23, 59, 59, 999));
+                
+                const fMonth = fStart.toLocaleDateString('pt-BR', { month: 'short', timeZone: 'UTC' }).replace('.', '');
+                label = i === 0 ? 'Quin Atual' : `${isSecondHalf ? '2ª' : '1ª'} Quin ${fMonth.charAt(0).toUpperCase() + fMonth.slice(1)}`;
+                dateRange = { start: fStart, end: fEnd };
+                break;
+            case 'monthly':
+                const mDate = new Date(Date.UTC(utcNow.getUTCFullYear(), utcNow.getUTCMonth() - i, 1));
+                label = mDate.toLocaleDateString('pt-BR', { month: 'short', timeZone: 'UTC' });
+                label = label.charAt(0).toUpperCase() + label.slice(1);
+                dateRange.start = new Date(Date.UTC(mDate.getUTCFullYear(), mDate.getUTCMonth(), 1, 0, 0, 0));
+                dateRange.end = new Date(Date.UTC(mDate.getUTCFullYear(), mDate.getUTCMonth() + 1, 0, 23, 59, 59, 999));
+                break;
+            case 'bimestral':
+                const bDate = new Date(Date.UTC(utcNow.getUTCFullYear(), utcNow.getUTCMonth() - (i * 2), 1));
+                const bim = Math.ceil((bDate.getUTCMonth() + 1) / 2);
+                label = `${bim}º Bim`;
+                dateRange.start = new Date(Date.UTC(bDate.getUTCFullYear(), (bim - 1) * 2, 1, 0, 0, 0));
+                dateRange.end = new Date(Date.UTC(bDate.getUTCFullYear(), bim * 2, 0, 23, 59, 59, 999));
+                break;
+            case 'trimestral':
+                const tDate = new Date(Date.UTC(utcNow.getUTCFullYear(), utcNow.getUTCMonth() - (i * 3), 1));
+                const tri = Math.ceil((tDate.getUTCMonth() + 1) / 3);
+                label = `${tri}º Tri`;
+                dateRange.start = new Date(Date.UTC(tDate.getUTCFullYear(), (tri - 1) * 3, 1, 0, 0, 0));
+                dateRange.end = new Date(Date.UTC(tDate.getUTCFullYear(), tri * 3, 0, 23, 59, 59, 999));
+                break;
+            case 'semestral':
+                const sDate = new Date(Date.UTC(utcNow.getUTCFullYear(), utcNow.getUTCMonth() - (i * 6), 1));
+                const sem = sDate.getUTCMonth() < 6 ? 1 : 2;
+                label = `${sem}º Sem`;
+                dateRange.start = new Date(Date.UTC(sDate.getUTCFullYear(), (sem - 1) * 6, 1, 0, 0, 0));
+                dateRange.end = new Date(Date.UTC(sDate.getUTCFullYear(), sem * 6, 0, 23, 59, 59, 999));
+                break;
+            case 'anual':
+                const aDate = new Date(Date.UTC(utcNow.getUTCFullYear() - i, 0, 1));
+                label = `${aDate.getUTCFullYear()}`;
+                dateRange.start = new Date(Date.UTC(aDate.getUTCFullYear(), 0, 1, 0, 0, 0));
+                dateRange.end = new Date(Date.UTC(aDate.getUTCFullYear(), 11, 31, 23, 59, 59, 999));
+                break;
+        }
+        periods.push({ label, dateRange });
+    }
+    return periods.reverse();
+}
+
 async function renderReports() {
     const mainCanvas = document.getElementById('mainChart');
     const trendCanvas = document.getElementById('trendChart');
@@ -1094,27 +1233,68 @@ async function renderReports() {
     
     const periodEl = document.getElementById('report-period');
     const reportPeriodType = periodEl ? periodEl.value : 'weekly';
-    const trendLabels = getTrendLabels(reportPeriodType);
+    
+    // Configurar quantidade de períodos na tendência
+    let periodCount = 4;
+    if (reportPeriodType === 'daily') periodCount = 5;
+    if (reportPeriodType === 'monthly') periodCount = 6;
+    
+    const retroactivePeriods = getRetroactivePeriods(reportPeriodType, periodCount);
+    const trendLabels = retroactivePeriods.map(p => p.label);
 
-    // 1. Buscar TODOS os registros do sistema ativo uma única vez para o relatório
+    // 1. Buscar registros (com limite maior e ordenação para garantir dados recentes)
     const { data: allTracking, error } = await _supabase
         .from(getActiveTable())
-        .select('status, periodo, professor_id, serie');
+        .select('status, periodo, professor_id, serie')
+        .order('periodo', { ascending: false })
+        .limit(2000);
     
     if (error) {
         console.error("Erro ao buscar dados para o relatório:", error);
         return;
     }
 
-    // 2. Filtrar dados pelo tipo de período selecionado (ex: 'weekly-')
-    const filteredTracking = allTracking.filter(item => item.periodo.startsWith(`${reportPeriodType}-`));
+    // 2. Filtrar dados pelos períodos retroativos calculados usando range de datas
+    const filteredTracking = allTracking.filter(item => {
+        const itemRange = parsePeriodToRange(item.periodo);
+        if (!itemRange) return false;
 
-    // 3. Identificar os períodos únicos presentes para cálculo de "Pendente"
-    // Usamos os períodos que realmente têm algum dado, ou se for semanal, podemos considerar as semanas até a atual
-    const uniquePeriods = [...new Set(filteredTracking.map(item => item.periodo))];
-    const numPeriods = Math.max(1, uniquePeriods.length);
+        const itemStart = itemRange.start.getTime();
+        const itemEnd = itemRange.end.getTime();
 
-    // 4. Calcular totais para o Gráfico de Visão Geral (Doughnut)
+        return retroactivePeriods.some(p => {
+            const pStart = p.dateRange.start.getTime();
+            const pEnd = p.dateRange.end.getTime();
+            // Verifica sobreposição de datas: (StartA <= EndB) e (EndA >= StartB)
+            return itemStart <= pEnd && itemEnd >= pStart;
+        });
+    });
+
+    // 3. Focar o resumo (Doughnut) e listas no período MAIS RECENTE
+    // 3. Focar o resumo (Doughnut) e listas no período MAIS RECENTE da janela
+    const currentPeriod = retroactivePeriods[retroactivePeriods.length - 1];
+    const cpStart = currentPeriod.dateRange.start.getTime();
+    const cpEnd = currentPeriod.dateRange.end.getTime();
+
+    // Filtramos os registros que caem NESTA janela específica
+    const currentPeriodTracking = filteredTracking.filter(item => {
+        const itemRange = parsePeriodToRange(item.periodo);
+        if (!itemRange) return false;
+        return itemRange.start.getTime() <= cpEnd && itemRange.end.getTime() >= cpStart;
+    });
+
+    // 4. Calcular o multiplicador de expectativa
+    // Se o relatório é Quinzenal (15 dias) e o acompanhamento é Semanal (7 dias), esperamos 2 registros.
+    const windowDays = (cpEnd - cpStart) / (1000 * 60 * 60 * 24);
+    let numPeriods = 1;
+    if (windowDays > 8 && windowDays <= 16) numPeriods = 2; // Quinzenal
+    else if (windowDays > 25 && windowDays <= 32) numPeriods = 4; // Mensal
+    else if (windowDays > 50 && windowDays <= 65) numPeriods = 8; // Bimestral
+    else if (windowDays > 80 && windowDays <= 100) numPeriods = 12; // Trimestral
+    else if (windowDays > 170 && windowDays <= 190) numPeriods = 26; // Semestral
+    else if (windowDays > 350) numPeriods = 52; // Anual
+
+    // 5. Calcular totais para o Gráfico de Visão Geral (Doughnut)
     let totalSeriesPerTeacher = 0;
     state.teachers.forEach(t => {
         const sistemas = t.sistemas || ['eclass'];
@@ -1125,17 +1305,19 @@ async function renderReports() {
 
     const totalExpected = totalSeriesPerTeacher * numPeriods;
     const stats = { sim: 0, nao: 0, parcial: 0, pendente: 0 };
-    let totalRecorded = filteredTracking.length;
-
-    filteredTracking.forEach(item => {
+    let totalRecorded = 0;
+    
+    currentPeriodTracking.forEach(item => {
+        totalRecorded++;
         if (item.status === 'Sim') stats.sim++;
         else if (item.status === 'Não fez') stats.nao++;
         else if (item.status === 'Parcialmente') stats.parcial++;
         else stats.pendente++;
     });
 
-    // Pendentes = (Pendentes explícitos) + (Omissões/Não lançados em todos os períodos detectados)
-    stats.pendente += (totalExpected - totalRecorded);
+    // Pendente = Omissões (quem não lançou nada no período esperado)
+    const omissions = Math.max(0, totalExpected - totalRecorded);
+    stats.pendente += omissions;
 
     // Renderizar Doughnut
     if (mainChart) mainChart.destroy();
@@ -1183,24 +1365,19 @@ async function renderReports() {
             }
         });
 
-        const currentYear = new Date().getFullYear();
-        trendData = trendLabels.map(label => {
-            let searchKey = '';
-            if (reportPeriodType === 'weekly') {
-                const num = label.match(/\d+/);
-                if (num) searchKey = `weekly-${currentYear}-W${num[0].padStart(2, '0')}`;
-            } else if (reportPeriodType === 'daily') {
-                searchKey = `daily-${label.toLowerCase()}`;
-            } else if (reportPeriodType === 'monthly') {
-                const months = { 'Jan': 0, 'Fev': 1, 'Mar': 2, 'Abr': 3, 'Mai': 4, 'Jun': 5 };
-                if (months[label] !== undefined) searchKey = `monthly-${currentYear}-${String(months[label] + 1).padStart(2, '0')}`;
-            } else {
-                searchKey = `${reportPeriodType}-${label.toLowerCase()}`;
-            }
+        trendData = retroactivePeriods.map(p => {
+            const pStart = p.dateRange.start.getTime();
+            const pEnd = p.dateRange.end.getTime();
+            
+            const periodItems = filteredTracking.filter(item => {
+                const itemRange = parsePeriodToRange(item.periodo);
+                if (!itemRange) return false;
+                return itemRange.start.getTime() <= pEnd && itemRange.end.getTime() >= pStart;
+            });
 
-            const pStats = periodStatsMap[searchKey];
-            if (!pStats || expectedPerPeriod === 0) return 0;
-            return Math.round((pStats.ok / expectedPerPeriod) * 100);
+            const okCount = periodItems.filter(item => item.status === 'Sim' || item.status === 'Parcialmente').length;
+            if (expectedPerPeriod === 0) return 0;
+            return Math.round((okCount / expectedPerPeriod) * 100);
         });
     } catch (e) {
         console.error("Erro ao calcular tendência:", e);
@@ -1240,10 +1417,10 @@ async function renderReports() {
     const listTotals = { 'Sim': 0, 'Não fez': 0, 'Parcialmente': 0, 'Pendente': 0 };
     const grouped = { 'Sim': {}, 'Não fez': {}, 'Parcialmente': {}, 'Pendente': {} };
 
-    // Usamos filteredTracking que já contém os dados necessários
-    filteredTracking.sort((a, b) => b.periodo.localeCompare(a.periodo));
+    // Usamos currentPeriodTracking para que as listas reflitam apenas o período selecionado/atual
+    currentPeriodTracking.sort((a, b) => b.periodo.localeCompare(a.periodo));
 
-    filteredTracking.forEach(item => {
+    currentPeriodTracking.forEach(item => {
         const prof = teacherMap[item.professor_id];
         const sistemas = prof ? (prof.sistemas || ['eclass']) : [];
         if (!prof || !sistemas.includes(state.activeSystem)) return;
@@ -1255,7 +1432,10 @@ async function renderReports() {
             statusGroup[prof.id] = { nome: prof.nome, count: 0, details: [] };
         }
         statusGroup[prof.id].count++;
-        statusGroup[prof.id].details.push(`${item.serie} | ${item.periodo.replace(reportPeriodType+'-', '')}`);
+        // Simplifica o label do período na exibição para mostrar a data original
+        const itemRange = parsePeriodToRange(item.periodo);
+        const periodLabel = itemRange ? itemRange.start.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'}) : item.periodo;
+        statusGroup[prof.id].details.push(`${item.serie} | ${periodLabel}`);
         listTotals[statusKey]++;
     });
 
@@ -1423,16 +1603,8 @@ window.addEventListener('afterprint', () => {
 });
 
 function getTrendLabels(type) {
-    switch(type) {
-        case 'daily': return ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
-        case 'weekly': return ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'];
-        case 'monthly': return ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
-        case 'bimestral': return ['Bim 1', 'Bim 2', 'Bim 3', 'Bim 4', 'Bim 5', 'Bim 6'];
-        case 'trimestral': return ['Tri 1', 'Tri 2', 'Tri 3', 'Tri 4'];
-        case 'semestral': return ['Sem 1', 'Sem 2'];
-        case 'anual': return ['2023', '2024', '2025', '2026'];
-        default: return ['P1', 'P2', 'P3', 'P4'];
-    }
+    const periods = getRetroactivePeriods(type);
+    return periods.map(p => p.label);
 }
 
 // --- Segmentos Management ---
