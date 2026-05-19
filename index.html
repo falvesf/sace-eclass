@@ -128,13 +128,18 @@
                             <!-- JS will populate this -->
                         </div>
                     </div>
-                    <!-- Seletor de Sistema -->
-                    <div class="system-switcher">
-                        <button id="btn-sys-eclass" class="sys-btn active" onclick="switchSystem('eclass')">
-                            <i class="fas fa-laptop"></i> E-Class
-                        </button>
-                        <button id="btn-sys-seq_didatica" class="sys-btn" onclick="switchSystem('seq_didatica')">
-                            <i class="fas fa-book-open"></i> Seq. Didática
+                    <!-- Seletor de Sistema e Filtros -->
+                    <div class="controls-row" style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 0.75rem; flex-wrap: wrap; width: 100%;">
+                        <div class="system-switcher" style="margin-bottom: 0;">
+                            <button id="btn-sys-eclass" class="sys-btn active" onclick="switchSystem('eclass')">
+                                <i class="fas fa-laptop"></i> E-Class
+                            </button>
+                            <button id="btn-sys-seq_didatica" class="sys-btn" onclick="switchSystem('seq_didatica')">
+                                <i class="fas fa-book-open"></i> Seq. Didática
+                            </button>
+                        </div>
+                        <button id="btn-toggle-filters" class="btn-toggle-filters" onclick="toggleFilters()">
+                            <i class="fas fa-filter-slash"></i> <span>Ocultar Filtros</span>
                         </button>
                     </div>
                     <div class="filter-bar">
