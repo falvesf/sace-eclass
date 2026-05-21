@@ -544,6 +544,26 @@ input.hide-text::-webkit-datetime-edit {
 
     /* Config section */
     .form-row, .form-group { margin-bottom: 1rem; }
+
+    /* Controls row and Toggle Filters button */
+    .controls-row {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 8px !important;
+    }
+    .system-switcher {
+        width: 100% !important;
+    }
+    .system-switcher .sys-btn {
+        flex: 1;
+        justify-content: center;
+    }
+    .btn-toggle-filters {
+        width: 100% !important;
+        justify-content: center;
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+    }
 }
 
 /* Print Control */
@@ -865,6 +885,41 @@ input.hide-text::-webkit-datetime-edit {
 
 .sys-btn:hover { color: white; background: rgba(255,255,255,0.06); }
 .sys-btn.active { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(99,102,241,0.35); }
+
+/* ===== TOGGLE FILTERS ===== */
+.btn-toggle-filters {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    color: #818cf8;
+    padding: 0.45rem 1.1rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+}
+.btn-toggle-filters:hover {
+    background: rgba(99, 102, 241, 0.18);
+    border-color: rgba(99, 102, 241, 0.35);
+    color: white;
+}
+.btn-toggle-filters.collapsed {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--border);
+    color: var(--text-muted);
+}
+.btn-toggle-filters.collapsed:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+}
+
+.filter-bar.collapsed {
+    display: none !important;
+}
 
 /* ===== TEACHER SYSTEM CHECKBOXES ===== */
 .teacher-actions {

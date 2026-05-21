@@ -80,6 +80,7 @@ window.onload = async () => {
     const week = getWeekNumber(now);
     document.getElementById('week-selector').value = `${now.getFullYear()}-W${String(week).padStart(2, '0')}`;
     updatePeriodSelector();
+    initFilters(); // Inicializa os filtros (ocultos ou visíveis)
 
     const savedUser = localStorage.getItem('sace_user');
     if (savedUser) {
@@ -1904,5 +1905,57 @@ function closeCredits() {
         screen.style.display = 'none';
         // Restaura scroll do body
         document.body.style.overflow = 'auto';
+    }
+}
+
+// --- Toggle / Expand Filters (Mobile Optimizations) ---
+function initFilters() {
+    const filterBar = document.querySelector('.filter-bar');
+    const btnToggle = document.getElementById('btn-toggle-filters');
+    if (!filterBar || !btnToggle) return;
+    
+    const isCollapsed = localStorage.getItem('sace_filters_collapsed') === 'true';
+    
+    let shouldCollapse = isCollapsed;
+    if (localStorage.getItem('sace_filters_collapsed') === null) {
+        // Padrão: recolhido em telas pequenas (mobile), expandido em telas grandes
+        shouldCollapse = window.innerWidth <= 768;
+    }
+    
+    filterBar.classList.toggle('collapsed', shouldCollapse);
+    btnToggle.classList.toggle('collapsed', shouldCollapse);
+    
+    const icon = btnToggle.querySelector('i');
+    const text = btnToggle.querySelector('span');
+    if (icon && text) {
+        if (shouldCollapse) {
+            icon.className = 'fas fa-filter';
+            text.textContent = 'Mostrar Filtros';
+        } else {
+            icon.className = 'fas fa-filter-slash';
+            text.textContent = 'Ocultar Filtros';
+        }
+    }
+}
+
+function toggleFilters() {
+    const filterBar = document.querySelector('.filter-bar');
+    const btnToggle = document.getElementById('btn-toggle-filters');
+    if (!filterBar || !btnToggle) return;
+    
+    const isCollapsed = filterBar.classList.toggle('collapsed');
+    btnToggle.classList.toggle('collapsed', isCollapsed);
+    
+    const icon = btnToggle.querySelector('i');
+    const text = btnToggle.querySelector('span');
+    
+    if (isCollapsed) {
+        if (icon) icon.className = 'fas fa-filter';
+        if (text) text.textContent = 'Mostrar Filtros';
+        localStorage.setItem('sace_filters_collapsed', 'true');
+    } else {
+        if (icon) icon.className = 'fas fa-filter-slash';
+        if (text) text.textContent = 'Ocultar Filtros';
+        localStorage.setItem('sace_filters_collapsed', 'false');
     }
 }
