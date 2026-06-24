@@ -1,0 +1,27 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    # Executa a cada 3 dias às 12:00 UTC
+    - cron: '0 12 */3 * *'
+  workflow_dispatch: # Permite execução manual
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase Database
+        run: |
+          echo "Pinging Supabase to prevent pause..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X GET "https://qqnckvemoetdbimrofrm.supabase.co/rest/v1/professores?select=id&limit=1" \
+            -H "apikey: sb_publishable_9Ys3sLag7RRkVjkMBG7uHQ_hq4bNURE" \
+            -H "Authorization: Bearer sb_publishable_9Ys3sLag7RRkVjkMBG7uHQ_hq4bNURE")
+          
+          echo "Response code: $response"
+          
+          if [ "$response" -eq 200 ]; then
+            echo "Keep-alive bem sucedido."
+          else
+            echo "Falha no keep-alive. Código HTTP: $response"
+            exit 1
+          fi
