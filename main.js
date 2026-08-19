@@ -100,6 +100,33 @@ function getWeekNumber(d) {
     return weekNo;
 }
 
+function getISOWeekString(date) {
+    const year = date.getFullYear();
+    const week = getWeekNumber(date);
+    return `${year}-W${String(week).padStart(2, '0')}`;
+}
+
+function getHolidayWeeks(startDate, endDate) {
+    const holidayWeeks = new Set();
+    if (!startDate || !endDate) return holidayWeeks;
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    if (start > end) return holidayWeeks;
+    
+    // Iterate through each day from start to end
+    const current = new Date(start);
+    while (current <= end) {
+        const weekString = getISOWeekString(current);
+        holidayWeeks.add(weekString);
+        // Move to next day
+        current.setDate(current.getDate() + 1);
+    }
+    
+    return holidayWeeks;
+}
+
 function getAcademicWeek(isoWeekString) {
     if (!state.config.ano_inicio) return null;
     
@@ -116,17 +143,47 @@ function getAcademicWeek(isoWeekString) {
     const startIsoWeek = getWeekNumber(startDate);
     const startYear = startDate.getFullYear();
 
+    // Calculate total weeks without holidays
+    let totalWeeks;
     if (currentYear === startYear) {
-        return currentIsoWeek - startIsoWeek + 1;
+        totalWeeks = currentIsoWeek - startIsoWeek + 1;
     } else if (currentYear > startYear) {
         const dec31 = new Date(startYear, 11, 31);
         let weeksInStartYear = getWeekNumber(dec31);
         if (weeksInStartYear === 1) { 
             weeksInStartYear = getWeekNumber(new Date(startYear, 11, 24));
         }
-        return (weeksInStartYear - startIsoWeek + 1) + currentIsoWeek;
+        totalWeeks = (weeksInStartYear - startIsoWeek + 1) + currentIsoWeek;
+    } else {
+        return null;
     }
-    return null;
+    
+    // If no holiday config, return original calculation
+    if (!state.config.ferias_inicio || !state.config.ferias_fim) {
+        return totalWeeks;
+    }
+    
+    // Get holiday weeks
+    const holidayWeeks = getHolidayWeeks(state.config.ferias_inicio, state.config.ferias_fim);
+    
+    // Count holiday weeks between start date and current week
+    let holidayCount = 0;
+    const currentDate = new Date(startYear, 0, 1 + (startIsoWeek - 1) * 7);
+    
+    // Generate all weeks from start week to current week
+    const endWeekDate = new Date(currentYear, 0, 1 + (currentIsoWeek - 1) * 7);
+    
+    const tempDate = new Date(currentDate);
+    while (tempDate <= endWeekDate) {
+        const weekStr = getISOWeekString(tempDate);
+        if (holidayWeeks.has(weekStr)) {
+            holidayCount++;
+        }
+        // Move to next week
+        tempDate.setDate(tempDate.getDate() + 7);
+    }
+    
+    return Math.max(1, totalWeeks - holidayCount);
 }
 
 function formatPeriodForDisplay(periodValue) {
@@ -311,10 +368,14 @@ async function loadConfig() {
     const previewImg = document.getElementById('signature-preview');
     const inicioEl = document.getElementById('config-ano-inicio');
     const fimEl = document.getElementById('config-ano-fim');
+    const feriasInicioEl = document.getElementById('config-ferias-inicio');
+    const feriasFimEl = document.getElementById('config-ferias-fim');
 
     if (cidadeEl) cidadeEl.value = state.config.cidade_uf || '';
     if (inicioEl) inicioEl.value = state.config.ano_inicio || '';
     if (fimEl) fimEl.value = state.config.ano_fim || '';
+    if (feriasInicioEl) feriasInicioEl.value = state.config.ferias_inicio || '';
+    if (feriasFimEl) feriasFimEl.value = state.config.ferias_fim || '';
 
     if (state.config.assinatura_url && previewImg && previewContainer) {
         previewImg.src = state.config.assinatura_url;
@@ -400,6 +461,8 @@ async function saveConfig(silent = false) {
     const cidade_uf = document.getElementById('config-cidade-uf').value;
     const ano_inicio = document.getElementById('config-ano-inicio')?.value;
     const ano_fim = document.getElementById('config-ano-fim')?.value;
+    const ferias_inicio = document.getElementById('config-ferias-inicio')?.value;
+    const ferias_fim = document.getElementById('config-ferias-fim')?.value;
 
     const updates = [
         { chave: 'cidade_uf', valor: cidade_uf, usuario },
@@ -409,6 +472,8 @@ async function saveConfig(silent = false) {
 
     if (ano_inicio !== undefined) updates.push({ chave: 'ano_inicio', valor: ano_inicio, usuario: 'global' });
     if (ano_fim !== undefined) updates.push({ chave: 'ano_fim', valor: ano_fim, usuario: 'global' });
+    if (ferias_inicio !== undefined) updates.push({ chave: 'ferias_inicio', valor: ferias_inicio, usuario: 'global' });
+    if (ferias_fim !== undefined) updates.push({ chave: 'ferias_fim', valor: ferias_fim, usuario: 'global' });
 
     const { error } = await _supabase
         .from('configuracoes')
