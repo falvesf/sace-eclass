@@ -481,6 +481,13 @@ async function saveConfig(silent = false) {
 
     if (error) alert('Erro ao salvar configurações: ' + error.message);
     else {
+        // Atualiza o state local com os novos valores
+        state.config.cidade_uf = cidade_uf;
+        state.config.ano_inicio = ano_inicio;
+        state.config.ano_fim = ano_fim;
+        state.config.ferias_inicio = ferias_inicio;
+        state.config.ferias_fim = ferias_fim;
+
         if (!silent) alert('Configurações salvas com sucesso!');
         await renderTrackingList(false); // Atualiza os labels visuais da tela de acompanhamento
     }
