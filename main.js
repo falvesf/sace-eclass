@@ -115,14 +115,22 @@ function getHolidayWeeks(startDate, endDate) {
     
     if (start > end) return holidayWeeks;
     
+    console.log('getHolidayWeeks - startDate:', startDate, 'endDate:', endDate);
+    console.log('getHolidayWeeks - start:', start, 'end:', end);
+    
     // Iterate through each day from start to end
     const current = new Date(start);
+    let dayCount = 0;
     while (current <= end) {
         const weekString = getISOWeekString(current);
         holidayWeeks.add(weekString);
+        dayCount++;
         // Move to next day
         current.setDate(current.getDate() + 1);
     }
+    
+    console.log('getHolidayWeeks - days counted:', dayCount);
+    console.log('getHolidayWeeks - holidayWeeks:', Array.from(holidayWeeks));
     
     return holidayWeeks;
 }
@@ -143,6 +151,10 @@ function getAcademicWeek(isoWeekString) {
     const startIsoWeek = getWeekNumber(startDate);
     const startYear = startDate.getFullYear();
 
+    console.log('getAcademicWeek - isoWeekString:', isoWeekString);
+    console.log('getAcademicWeek - ano_inicio:', state.config.ano_inicio);
+    console.log('getAcademicWeek - startDate:', startDate, 'startIsoWeek:', startIsoWeek);
+
     // Calculate total weeks without holidays
     let totalWeeks;
     if (currentYear === startYear) {
@@ -158,8 +170,11 @@ function getAcademicWeek(isoWeekString) {
         return null;
     }
     
+    console.log('getAcademicWeek - totalWeeks (bruto):', totalWeeks);
+    
     // If no holiday config, return original calculation
     if (!state.config.ferias_inicio || !state.config.ferias_fim) {
+        console.log('getAcademicWeek - sem config de férias, retornando:', totalWeeks);
         return totalWeeks;
     }
     
@@ -173,15 +188,21 @@ function getAcademicWeek(isoWeekString) {
     // Generate all weeks from start week to current week
     const endWeekDate = new Date(currentYear, 0, 1 + (currentIsoWeek - 1) * 7);
     
+    console.log('getAcademicWeek - currentDate:', currentDate, 'endWeekDate:', endWeekDate);
+    
     const tempDate = new Date(currentDate);
     while (tempDate <= endWeekDate) {
         const weekStr = getISOWeekString(tempDate);
         if (holidayWeeks.has(weekStr)) {
             holidayCount++;
+            console.log('getAcademicWeek - semana de férias encontrada:', weekStr);
         }
         // Move to next week
         tempDate.setDate(tempDate.getDate() + 7);
     }
+    
+    console.log('getAcademicWeek - holidayCount:', holidayCount);
+    console.log('getAcademicWeek - resultado final:', Math.max(1, totalWeeks - holidayCount));
     
     return Math.max(1, totalWeeks - holidayCount);
 }
