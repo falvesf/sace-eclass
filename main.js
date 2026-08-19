@@ -110,27 +110,23 @@ function getHolidayWeeks(startDate, endDate) {
     const holidayWeeks = new Set();
     if (!startDate || !endDate) return holidayWeeks;
     
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    // Parse dates as local time (not UTC) to avoid timezone offset
+    const partsStart = startDate.split('-');
+    const partsEnd = endDate.split('-');
+    
+    const start = new Date(parseInt(partsStart[0]), parseInt(partsStart[1]) - 1, parseInt(partsStart[2]));
+    const end = new Date(parseInt(partsEnd[0]), parseInt(partsEnd[1]) - 1, parseInt(partsEnd[2]));
     
     if (start > end) return holidayWeeks;
     
-    console.log('getHolidayWeeks - startDate:', startDate, 'endDate:', endDate);
-    console.log('getHolidayWeeks - start:', start, 'end:', end);
-    
     // Iterate through each day from start to end
     const current = new Date(start);
-    let dayCount = 0;
     while (current <= end) {
         const weekString = getISOWeekString(current);
         holidayWeeks.add(weekString);
-        dayCount++;
         // Move to next day
         current.setDate(current.getDate() + 1);
     }
-    
-    console.log('getHolidayWeeks - days counted:', dayCount);
-    console.log('getHolidayWeeks - holidayWeeks:', Array.from(holidayWeeks));
     
     return holidayWeeks;
 }
@@ -151,10 +147,6 @@ function getAcademicWeek(isoWeekString) {
     const startIsoWeek = getWeekNumber(startDate);
     const startYear = startDate.getFullYear();
 
-    console.log('getAcademicWeek - isoWeekString:', isoWeekString);
-    console.log('getAcademicWeek - ano_inicio:', state.config.ano_inicio);
-    console.log('getAcademicWeek - startDate:', startDate, 'startIsoWeek:', startIsoWeek);
-
     // Calculate total weeks without holidays
     let totalWeeks;
     if (currentYear === startYear) {
@@ -170,11 +162,8 @@ function getAcademicWeek(isoWeekString) {
         return null;
     }
     
-    console.log('getAcademicWeek - totalWeeks (bruto):', totalWeeks);
-    
     // If no holiday config, return original calculation
     if (!state.config.ferias_inicio || !state.config.ferias_fim) {
-        console.log('getAcademicWeek - sem config de férias, retornando:', totalWeeks);
         return totalWeeks;
     }
     
@@ -183,26 +172,26 @@ function getAcademicWeek(isoWeekString) {
     
     // Count holiday weeks between start date and current week
     let holidayCount = 0;
-    const currentDate = new Date(startYear, 0, 1 + (startIsoWeek - 1) * 7);
     
-    // Generate all weeks from start week to current week
-    const endWeekDate = new Date(currentYear, 0, 1 + (currentIsoWeek - 1) * 7);
+    // Calculate the Monday of the start ISO week
+    const jan4Start = new Date(Date.UTC(startYear, 0, 4));
+    const startMonday = new Date(jan4Start);
+    startMonday.setUTCDate(jan4Start.getUTCDate() - ((jan4Start.getUTCDay() || 7) - 1) + (startIsoWeek - 1) * 7);
     
-    console.log('getAcademicWeek - currentDate:', currentDate, 'endWeekDate:', endWeekDate);
+    // Calculate the Monday of the current ISO week
+    const jan4Current = new Date(Date.UTC(currentYear, 0, 4));
+    const endMonday = new Date(jan4Current);
+    endMonday.setUTCDate(jan4Current.getUTCDate() - ((jan4Current.getUTCDay() || 7) - 1) + (currentIsoWeek - 1) * 7);
     
-    const tempDate = new Date(currentDate);
-    while (tempDate <= endWeekDate) {
+    const tempDate = new Date(startMonday);
+    while (tempDate <= endMonday) {
         const weekStr = getISOWeekString(tempDate);
         if (holidayWeeks.has(weekStr)) {
             holidayCount++;
-            console.log('getAcademicWeek - semana de férias encontrada:', weekStr);
         }
         // Move to next week
-        tempDate.setDate(tempDate.getDate() + 7);
+        tempDate.setUTCDate(tempDate.getUTCDate() + 7);
     }
-    
-    console.log('getAcademicWeek - holidayCount:', holidayCount);
-    console.log('getAcademicWeek - resultado final:', Math.max(1, totalWeeks - holidayCount));
     
     return Math.max(1, totalWeeks - holidayCount);
 }
